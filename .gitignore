@@ -1,0 +1,14 @@
+# Compilación de Java (Archivos de clase)
+*.class
+*.log
+*.ctxt
+
+# Carpeta de salida de Maven (¡Muy importante!)
+/compilador01/target/
+
+# Configuraciones locales de Visual Studio Code
+.vscode/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
