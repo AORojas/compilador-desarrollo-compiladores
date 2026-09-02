@@ -29,7 +29,7 @@
 |---|---|
 | L | a–z, A–Z |
 | D | 0–9 |
-| SIM | + - * / ( ) { } < > ! = |
+| SIM | + - * / ( ) { } < > = |
 | BL | espacio, tabulador |
 | SL | salto de línea (\n, \r\n) $\rightarrow$ Token de fin de sentencia |
 | OTRO | cualquier otro carácter $\rightarrow$ error léxico |
@@ -61,7 +61,7 @@ principal · entero · si · bucle · hasta · mostrar · mostrarTexto · y · o
 | 268 | RETORNAR | retornar |
 | 269 | ASIG | = |
 | 270 | IGUAL | == |
-| 271 | DISTINTO | != |
+| 271 | DISTINTO | <> |
 | 272 | MENOR | < |
 | 273 | MAYOR | > |
 | 274 | EOF | fin de archivo |
