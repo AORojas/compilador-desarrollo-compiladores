@@ -65,8 +65,16 @@ principal · entero · si · bucle · hasta · mostrar · mostrarTexto · y · o
 | 272 | MENOR | < |
 | 273 | MAYOR | > |
 | 274 | EOF | fin de archivo |
-| — | fin de línea | El salto de línea físico actúa como delimitador sintáctico |
-| — | literales | + - * / ( ) { } , se devuelven como su propio carácter |
+| 275 | SUMA | + |
+| 276 | RESTA | - |
+| 277 | MULTIPLICACION | * |
+| 278 | DIVISION | / |
+| 279 | PAREN_IZQ | ( |
+| 280 | PAREN_DER | ) |
+| 281 | LLAVE_IZQ | { |
+| 282 | LLAVE_DER | } |
+| 283 | COMA | , |
+| 284 | fin de línea | El salto de línea físico actúa como delimitador sintáctico |
 
 ---
 
