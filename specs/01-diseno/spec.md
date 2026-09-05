@@ -220,9 +220,14 @@ El total calculado es:
 
 ---
 
-## 10. Fuera de alcance
+## 10. Autómata Finito
+
+![Diagrama del Autómata Finito](Autómata%20Finito.png)
+
+## 11. Fuera de alcance
 
 * Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.
 * Funciones con más de un (1) parámetro o sin valor de retorno (procedimientos void).
 * Sentencias de entrada de datos por teclado (no hay funciones de lectura).
 * Operadores lógicos de negación binaria o unaria (not / !).
+
