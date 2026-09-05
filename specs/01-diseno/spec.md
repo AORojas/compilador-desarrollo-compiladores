@@ -221,9 +221,7 @@ El total calculado es:
 ---
 
 ## 10. Autómata Finito
-
-![Diagrama del Autómata Finito](Autómata%20Finito.png)
-
+![Autómata Finito](../../compilador01/src/assets/Autómata%20Finito.png)
 ## 11. Fuera de alcance
 
 * Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.

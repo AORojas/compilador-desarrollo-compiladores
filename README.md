@@ -31,12 +31,27 @@ GRUPO D
 
 ## Estructura del repositorio
 
-- `docs/` — entregables formales de cada etapa
-- `src/` — compilador
-  - `main/` — código del compilador
-  - `tests/` — casos de prueba
-    - `correctos/` — programas que deben compilar sin errores
-    - `errores-lexicos-sintacticos/`
-    - `errores-semanticos/`
-- `out/` — tercetos, tabla de símbolos exportada, `.asm` generado
-- `specs/` — especificaciones y bitácoras por etapa
+compilador_desarrollo-compiladores/
+├── .gitignore
+├── README.md
+├── compilador01/
+│   ├─ src/
+│      ├── main/
+│      │   └── main.java          
+│      ├── assets/
+│      │   ├── Automata Finito.png
+│      │   └── Automata Finito.drawio
+│      └── pom.xml
+│   
+└── specs/
+    ├── 01-diseno/
+    │   ├── bitacora.md
+    │   └── spec.md
+    ├── AL/
+    │   └── lexico.md
+    ├── AS/
+    │   └── sintactico.md
+    ├── GC/
+    │   └── codigo.md
+    └── GCA/
+        
