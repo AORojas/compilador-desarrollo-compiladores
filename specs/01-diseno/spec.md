@@ -249,8 +249,44 @@ El total calculado es:
 | **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 |
 | **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - |
 
+## 12. Tabla de Nuevo Estado y Mapeo de Caracteres
+### 12.1 Mapeo de Columnas de Caracteres
 
-## 12. Fuera de alcance
+| Índice Columna | Tipo de Carácter | Caracteres Incluidos |
+| :---: | :--- | :--- |
+| **0** | Letra | `a-z`, `A-Z`, `_` |
+| **1** | Dígito | `0-9` |
+| **2** | Igual | `=` |
+| **3** | Menor | `<` |
+| **4** | Mayor | `>` |
+| **5** | Barra Diagonal | `/` |
+| **6** | Asterisco | `*` |
+| **7** | Delim. o \n | `(`, `)`, `{`, `}`, `,`, `\n` |
+| **8** | Espacio / Tab | ` `, `\t`, `\r` |
+| **9** | Comillas Dobles | `"` |
+| **10** | Otro | Cualquier otro símbolo (`#`, `?`, `$`, `%`, etc.) |
+
+### 12.2 Tabla de nuevo estado
+
+```java
+int[11][11] nuevo_estado = {
+    //  0,    1,   2,   3,   4,   5,   6,    7,    8,   9,   10  <- Índices
+    // Let, Dig,   =,   <,   >,   /,   *, Del/\n, Esp,  ", Otro
+    {    1,   2,   3,   5,  -1,   7,  -1,   -1,    0,  10,   -1 }, // E0 (Inicio)
+    {    1,   1,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E1 (ID / Pal. Res)
+    {   -1,   2,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E2 (CTE)
+    {   -1,  -1,   4,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E3 (ASIG)
+    {   -1,  -1,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E4 (IGUAL)
+    {   -1,  -1,  -1,  -1,   6,  -1,  -1,   -1,   -1,  -1,   -1 }, // E5 (MENOR)
+    {   -1,  -1,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E6 (DISTINTO)
+    {   -1,  -1,  -1,  -1,  -1,  -1,   8,   -1,   -1,  -1,   -1 }, // E7 (DIVISION)
+    {    8,   8,   8,   8,   8,   8,   9,    8,    8,   8,    8 }, // E8 (Comentario)
+    {    8,   8,   8,   8,   8,   0,   9,    8,    8,   8,    8 }, // E9 (Fin Comentario)
+    {   10,  10,  10,  10,  10,  10,  10,   10,   10,  -1,   10 }  // E10 (LITERAL_TXT)
+};
+```
+
+## 13. Fuera de alcance
 
 * Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.
 * Funciones con más de un (1) parámetro o sin valor de retorno (procedimientos void).
