@@ -235,25 +235,103 @@ El total calculado es:
 
 ## 11. Matriz de Transición de estados 
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | Delim. o \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | EF | E0 | EF |
-| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF |
-| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF |
-| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF |
-| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 |
-| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 |
-| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - |
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | E10 | EF | E0 | EF |
+| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF | EF |
+| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF | EF |
+| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 | E8 |
+| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 | E8 |
+| **E10** (Literal de Texto) | E10 | E10 | E10 | E10 | E10 | E10 | E10 | EF | E10 | E10 | E10 |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - |
+---
+
+## 12. Matriz de Tokens
+
+En esta matriz, cada celda indica el código del token que se devuelve cuando el automata llega a un estado terminal con la clase de entrada indicada. Si la combinación no produce un token directamente, se usa `-1`.
 
 
-## 12. Fuera de alcance
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | -1 | -1 | -1 | -1 | 273 | 278 | 277 | 258 | 279..283 / 284 | -1 | -1 |
+| **E1** (ID / Pal. Reservada) | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | -1 |
+| **E2** (CTE / Constante) | -1 | 257 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E3** (ASIG) | -1 | -1 | 270 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E4** (IGUAL) | -1 | -1 | 270 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E5** (MENOR) | -1 | -1 | -1 | -1 | 271 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E6** (DISTINTO) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E7** (DIVISION) | -1 | -1 | -1 | -1 | -1 | -1 | 278 | -1 | -1 | -1 | -1 |
+| **E8** (Comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E9** (Posible fin comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E10** (Literal de Texto) | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 |
+| **EF** (Final / Aceptación) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+
+### Regla de resolución
+
+- `ID` o palabra reservada: el token se resuelve por el contenido del buffer, no por la clase de entrada. Resultado posible: `256` o `259..268`.
+- `CTE`: el token de constante entera es `257`.
+- `LITERAL_TXT`: el token del texto es `258`.
+- `ASIG`: `269`.
+- `IGUAL`: `270`.
+- `DISTINTO`: `271`.
+- `MENOR`: `272`.
+- `MAYOR`: `273`.
+- `SUMA`: `275`.
+- `RESTA`: `276`.
+- `MULTIPLICACION`: `277`.
+- `DIVISION`: `278`.
+- `Delimitadores y fin de línea`: si el carácter es uno de `(`, `)`, `{`, `}`, `,` o `\n`, el token se devuelve como un conjunto de valores `279..283 / 284` según el caso exacto.
+- `EOF`: `274`.
+
+---
+
+## 13. Matriz de funciones semánticas
+
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Inicial) | F0 | F0 | F0 | F0 | F0 | F0 | F0 | F1 | F7 | F2 | FE |
+| **E1** (ID / Pal. Reservada) | F3 | F3 | F4 | F4 | F4 | F4 | F4 | F4 | F4 | F4 | FE |
+| **E2** (Constante) | F5 | F3 | F5 | F5 | F5 | F5 | F5 | F5 | F5 | F5 | FE |
+| **E3** (ASIG / posible ==) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E4** (IGUAL) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E5** (MENOR / posible <>) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E6** (DISTINTO) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E7** (DIVISION / posible comentario) | F3 | F3 | F3 | F3 | F3 | F3 | F8 | F3 | F3 | F3 | F3 |
+| **E8** (Comentario) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 |
+| **E9** (Posible fin comentario) | F3 | F3 | F3 | F3 | F3 | F0 | F3 | F3 | F3 | F3 | FE |
+| **E10** (Literal de Texto) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F11 | F3 | F3 | F3 |
+| **EF** (Final) | - | - | - | - | - | - | - | - | - | - | - |
+
+---
+
+## 14. Definición de las funciones
+
+Cada función modifica el buffer, el cursor o el estado del analizador antes de forzar la salida por EF.
+
+* F0 (Inicializar Buffer): limpia el buffer del lexema y almacena el primer carácter leído.
+* F1 (Abrir Literal): prepara el buffer para acumular texto y descarta la comilla de apertura.
+* F2 (Ignorar): no acumula nada, consume espacios, tabuladores o separadores y mantiene el estado en espera.
+* F3 (Acumular): agrega el carácter actual al buffer del lexema para continuar la construcción del token.
+* F4 (Retornar ID o Palabra Reservada): aplica lookahead si corresponde, normaliza la cadena y resuelve si es palabra reservada o identificador. Debe ubicar el token en la tabla de símbolos si corresponde.
+* F5 (Retornar Constante): retrocede un carácter si el automata consumió un carácter de más, valida el rango entero y registra la constante en la tabla de símbolos.
+* F6 (Retornar Token Directo): se usa para tokens unitarios o compuestos cuya clasificación ya está definida por el estado del autómata. Aquí entran los operadores simples y los casos de asignación/igualdad/distinto resueltos en la máquina, sin función especial adicional.
+* F7 (Retornar Fin de Línea): incrementa el contador de líneas del compilador y emite el token de fin de sentencia.
+* F8 (Cerrar Comentario): consume el resto del comentario cuando la barra (/) se reconoce como inicio de comentario y no genera token visible.
+* F11 (Cerrar Literal): descarta la comilla de cierre, guarda el contenido limpio en la tabla de símbolos y prepara la salida final con token `LITERAL_TXT`.
+* FE (Error Léxico): reporta el carácter inválido, registra la línea y fuerza la salida hacia EF para continuar con la recuperación.
+
+---
+
+## 15. Fuera de alcance
 
 * Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.
 * Funciones con más de un (1) parámetro o sin valor de retorno (procedimientos void).
 * Sentencias de entrada de datos por teclado (no hay funciones de lectura).
 * Operadores lógicos de negación binaria o unaria (not / !).
 
+---
