@@ -235,19 +235,22 @@ El total calculado es:
 
 ## 11. Matriz de Transición de estados 
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | Delim. o \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | EF | E0 | EF |
-| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF |
-| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF |
-| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF |
-| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 |
-| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 |
-| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - |
+
+| Estado Actual | Letra | Dígito | = | < | > | / | * | Delim. / \n | Espacio / Tab | " | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | EF | E0 | E10 | EF |
+| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF | EF |
+| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF | EF |
+| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 | E8 |
+| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 | E8 |
+| **E10** (LITERAL_TXT) | E10 | E10 | E10 | E10 | E10 | E10 | E10 | E10 | E10 | EF | E10 |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - |
+
 
 ## 12. Tabla de Nuevo Estado y Mapeo de Caracteres
 ### 12.1 Mapeo de Columnas de Caracteres
@@ -261,7 +264,7 @@ El total calculado es:
 | **4** | Mayor | `>` |
 | **5** | Barra Diagonal | `/` |
 | **6** | Asterisco | `*` |
-| **7** | Delim. o \n | `(`, `)`, `{`, `}`, `,`, `\n` |
+| **7** | Delim. / \n | `(`, `)`, `{`, `}`, `,`, `\n` |
 | **8** | Espacio / Tab | ` `, `\t`, `\r` |
 | **9** | Comillas Dobles | `"` |
 | **10** | Otro | Cualquier otro símbolo (`#`, `?`, `$`, `%`, etc.) |
