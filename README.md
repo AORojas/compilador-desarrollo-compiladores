@@ -4,7 +4,7 @@
 
 | Nombre             | Legajo | Rol |
 |--------------------|--------|-----|
-|Rojas Adrian        |        |     |
+|Orrego Rojas Adrian |        |     |
 |Viggiano Cristian   |9125    |     |
 
 ## TP asignado
@@ -29,20 +29,20 @@ GRUPO D
 ```
 ```
 
-## Estructura del repositorio
+## Estructura del Repositorio
 
+```text
 compilador_desarrollo-compiladores/
 ├── .gitignore
 ├── README.md
 ├── compilador01/
-│   ├─ src/
-│      ├── main/
-│      │   └── main.java          
-│      ├── assets/
-│      │   ├── Automata Finito.png
-│      │   └── Automata Finito.drawio
-│      └── pom.xml
-│   
+│   ├── src/
+│   │   └── main/
+│   │       └── main.java
+│   ├── assets/
+│   │   ├── Automata Finito.png
+│   │   └── Automata Finito.drawio
+│   └── pom.xml
 └── specs/
     ├── 01-diseno/
     │   ├── bitacora.md
@@ -54,4 +54,6 @@ compilador_desarrollo-compiladores/
     ├── GC/
     │   └── codigo.md
     └── GCA/
+```
+
         

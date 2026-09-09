@@ -188,23 +188,33 @@ Nota: El compilador no debe abortar en el primer error léxico, sintáctico o se
 ## 9. Programa de ejemplo
 
 ```java
-entero calcularFactorial(entero numero) {
-    entero resultado = 1
+/* 
+   Módulo de cálculo matemático
+   Implementa el algoritmo de factorial bajo la gramática oficial
+*/
+entero calcularFactorial(entero numero)
+{
+    entero resultado
+    resultado = 1
     
-    bucle {
+    bucle
+    {
         resultado = resultado * numero
         numero = numero - 1
-    } hasta (numero == 0)
+    } hasta (numero igual 0)
     
     retornar resultado
 }
 
-entero principal() {
+/* Función de entrada al sistema */
+entero principal()
+{
     entero vacas, limite
     vacas = 3
     limite = 3
     
-    si (vacas > 0) {
+    si (vacas > 0)
+    {
         entero totalGauchos
         totalGauchos = calcularFactorial(vacas)
         mostrarTexto("El total calculado es:")
@@ -213,16 +223,34 @@ entero principal() {
 }
 ```
 
-Salida esperada: 
+**Salida esperada:**
 
+```text
 El total calculado es:
 6
-
----
-
+```
 ## 10. Autómata Finito
+
 ![Autómata Finito](../../compilador01/src/assets/Autómata%20Finito.png)
-## 11. Fuera de alcance
+
+## 11. Matriz de Transición de estados 
+
+| Estado Actual | Letra | Dígito | = | < | > | / | * | Delim. o \n | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | EF | E0 | EF |
+| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF |
+| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF |
+| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF |
+| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 |
+| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - |
+
+
+## 12. Fuera de alcance
 
 * Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.
 * Funciones con más de un (1) parámetro o sin valor de retorno (procedimientos void).
