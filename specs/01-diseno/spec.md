@@ -63,18 +63,20 @@ principal · entero · si · bucle · hasta · mostrar · mostrarTexto · y · o
 | 270 | IGUAL | == |
 | 271 | DISTINTO | <> |
 | 272 | MENOR | < |
-| 273 | MAYOR | > |
-| 274 | EOF | fin de archivo |
-| 275 | SUMA | + |
-| 276 | RESTA | - |
-| 277 | MULTIPLICACION | * |
-| 278 | DIVISION | / |
-| 279 | PAREN_IZQ | ( |
-| 280 | PAREN_DER | ) |
-| 281 | LLAVE_IZQ | { |
-| 282 | LLAVE_DER | } |
-| 283 | COMA | , |
-| 284 | fin de línea | El salto de línea físico actúa como delimitador sintáctico |
+| 273 | MENOR O IGUAL| <= |
+| 274 | MAYOR | > |
+| 275 | MAYOR O IGUAL| >= |
+| 276 | EOF | fin de archivo |
+| 277 | SUMA | + |
+| 278 | RESTA | - |
+| 279 | MULTIPLICACION | * |
+| 280 | DIVISION | / |
+| 281 | PAREN_IZQ | ( |
+| 282 | PAREN_DER | ) |
+| 283 | LLAVE_IZQ | { |
+| 284 | LLAVE_DER | } |
+| 285 | COMA | , |
+| 286 | fin de línea | El salto de línea físico actúa como delimitador sintáctico |
 
 ---
 
@@ -133,7 +135,7 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 <cond_bloque>       ::= <expresion> <comparador> <expresion>
                       | '(' <condicion> ')'
 
-<comparador>        ::= IGUAL | DISTINTO | MENOR | MAYOR
+<comparador>        ::= IGUAL | DISTINTO | MENOR | MENOR O IGUAL | MAYOR | MAYOR O IGUAL
 
 <expresion>         ::= <expresion> '+' <termino>
                       | <expresion> '-' <termino>
@@ -235,20 +237,32 @@ El total calculado es:
 
 ## 11. Matriz de Transición de estados 
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | E10 | EF | E0 | EF |
-| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF | EF |
-| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF | EF |
-| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 | E8 |
-| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 | E8 |
-| **E10** (Literal de Texto) | E10 | E10 | E10 | E10 | E10 | E10 | E10 | EF | E10 | E10 | E10 |
-| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - |
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | CR | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | E1 | E2 | E3 | E5 | E8 | E10 | E16 | E13 | E14 | E15 | E17 | E18 | E19 | E20 | E21 | E22 | E0 | EF |
+| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E5** (MENOR) | EF | EF | E7 | EF | E6 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E7** (MENOR O IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E8** (MAYOR) | EF | EF | E9 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E9** (MAYOR O IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E10** (DIVISION) | EF | EF | EF | EF | EF | EF | E11 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E11** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E12 | E8 | E8 | E8 | E8 | E8 | E8 | E8 | E8 | E8 | E8 | E8 |
+| **E12** (Posible fin com.) | E11 | E11 | E11 | E11 | E11 | E0 | E12 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 |
+| **E13** (Literal de Texto) | E13 | E13 | E13 | E13 | E13 | E13 | E13 | EF | E13 | E13 | E13 | E13 | E13 | E13 | E13 | E13 | E13 | E13 |
+| **E14** (SUMA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E15** (RESTA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E16** (MULTIPLICACION) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E17** (PARENTESIS_IZQ) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E18** (PARENTESIS_DER) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E19** (LLAVE_DER) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E20** (LLAVE_IZQ) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E21** (COMA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E22** (CR) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
 ---
 
 ## 12. Matriz de Tokens
@@ -256,56 +270,66 @@ El total calculado es:
 En esta matriz, cada celda indica el código del token que se devuelve cuando el automata llega a un estado terminal con la clase de entrada indicada. Si la combinación no produce un token directamente, se usa `-1`.
 
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Comienzo) | -1 | -1 | -1 | -1 | 273 | 278 | 277 | 258 | 279..283 / 284 | -1 | -1 |
-| **E1** (ID / Pal. Reservada) | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | -1 |
-| **E2** (CTE / Constante) | -1 | 257 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E3** (ASIG) | -1 | -1 | 270 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E4** (IGUAL) | -1 | -1 | 270 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E5** (MENOR) | -1 | -1 | -1 | -1 | 271 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E6** (DISTINTO) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E7** (DIVISION) | -1 | -1 | -1 | -1 | -1 | -1 | 278 | -1 | -1 | -1 | -1 |
-| **E8** (Comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E9** (Posible fin comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E10** (Literal de Texto) | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 |
-| **EF** (Final / Aceptación) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | CR | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E1** (ID / Pal. Reservada) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E2** (CTE / Constante) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E3** (ASIG) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E4** (IGUAL) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E5** (MENOR) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E6** (DISTINTO) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E7** (MENOR O IGUAL) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E8** (MAYOR) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E9** (MAYOR O IGUAL) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E10** (DIVISION) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E11** (Comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E12** (Posible fin com.) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E13** (Literal de Texto) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E14** (SUMA) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E15** (RESTA) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E16** (MULTIPLICACION) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E17** (PARENTESIS_IZQ) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E18** (PARENTESIS_DER) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E19** (LLAVE_DER) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E20** (LLAVE_IZQ) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E21** (COMA) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E22** (CR) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
 
-### Regla de resolución
 
-- `ID` o palabra reservada: el token se resuelve por el contenido del buffer, no por la clase de entrada. Resultado posible: `256` o `259..268`.
-- `CTE`: el token de constante entera es `257`.
-- `LITERAL_TXT`: el token del texto es `258`.
-- `ASIG`: `269`.
-- `IGUAL`: `270`.
-- `DISTINTO`: `271`.
-- `MENOR`: `272`.
-- `MAYOR`: `273`.
-- `SUMA`: `275`.
-- `RESTA`: `276`.
-- `MULTIPLICACION`: `277`.
-- `DIVISION`: `278`.
-- `Delimitadores y fin de línea`: si el carácter es uno de `(`, `)`, `{`, `}`, `,` o `\n`, el token se devuelve como un conjunto de valores `279..283 / 284` según el caso exacto.
-- `EOF`: `274`.
 
 ---
 
 ## 13. Matriz de funciones semánticas
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Inicial) | F0 | F0 | F0 | F0 | F0 | F0 | F0 | F1 | F7 | F2 | FE |
-| **E1** (ID / Pal. Reservada) | F3 | F3 | F4 | F4 | F4 | F4 | F4 | F4 | F4 | F4 | FE |
-| **E2** (Constante) | F5 | F3 | F5 | F5 | F5 | F5 | F5 | F5 | F5 | F5 | FE |
-| **E3** (ASIG / posible ==) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E4** (IGUAL) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E5** (MENOR / posible <>) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E6** (DISTINTO) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E7** (DIVISION / posible comentario) | F3 | F3 | F3 | F3 | F3 | F3 | F8 | F3 | F3 | F3 | F3 |
-| **E8** (Comentario) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 |
-| **E9** (Posible fin comentario) | F3 | F3 | F3 | F3 | F3 | F0 | F3 | F3 | F3 | F3 | FE |
-| **E10** (Literal de Texto) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F11 | F3 | F3 | F3 |
-| **EF** (Final) | - | - | - | - | - | - | - | - | - | - | - |
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | CR | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E1** (ID / Pal. Reservada) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E2** (CTE / Constante) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E3** (ASIG) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E4** (IGUAL) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E5** (MENOR) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E6** (DISTINTO) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E7** (MENOR O IGUAL) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E8** (MAYOR) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E9** (MAYOR O IGUAL) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E10** (DIVISION) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E11** (Comentario) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E12** (Posible fin com.) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E13** (Literal de Texto) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E14** (SUMA) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E15** (RESTA) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E16** (MULTIPLICACION) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E17** (PARENTESIS_IZQ) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E18** (PARENTESIS_DER) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E19** (LLAVE_DER) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E20** (LLAVE_IZQ) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E21** (COMA) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **E22** (CR) | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE | FE |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
+
 
 ---
 
