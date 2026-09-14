@@ -31,7 +31,7 @@
 | D | 0–9 |
 | SIM | + - * / ( ) { } < > = |
 | BL | espacio, tabulador |
-| SL | salto de línea (\n, \r\n) $\rightarrow$ Token de fin de sentencia |
+| SL | salto de línea LF, CRLF(\n, \r\n) $\rightarrow$ Token de fin de sentencia |
 | OTRO | cualquier otro carácter $\rightarrow$ error léxico |
 
 ---
@@ -63,18 +63,21 @@ principal · entero · si · bucle · hasta · mostrar · mostrarTexto · y · o
 | 270 | IGUAL | == |
 | 271 | DISTINTO | <> |
 | 272 | MENOR | < |
-| 273 | MAYOR | > |
-| 274 | EOF | fin de archivo |
-| 275 | SUMA | + |
-| 276 | RESTA | - |
-| 277 | MULTIPLICACION | * |
-| 278 | DIVISION | / |
-| 279 | PAREN_IZQ | ( |
-| 280 | PAREN_DER | ) |
-| 281 | LLAVE_IZQ | { |
-| 282 | LLAVE_DER | } |
-| 283 | COMA | , |
-| 284 | fin de línea | El salto de línea físico actúa como delimitador sintáctico |
+| 273 | MENOR_O_IGUAL | <= |
+| 274 | MAYOR | > |
+| 275 | MAYOR_O_IGUAL | >= |
+| 276 | EOF | fin de archivo |
+| 277 | SUMA | + |
+| 278 | RESTA | - |
+| 279 | MULTIPLICACION | * |
+| 280 | DIVISION | / |
+| 281 | PAREN_IZQ | ( |
+| 282 | PAREN_DER | ) |
+| 283 | LLAVE_IZQ | { |
+| 284 | LLAVE_DER | } |
+| 285 | COMA | , |
+| 286 | FIN_DE_LINEA | salto de línea o CRLF |
+
 
 ---
 
@@ -133,7 +136,7 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 <cond_bloque>       ::= <expresion> <comparador> <expresion>
                       | '(' <condicion> ')'
 
-<comparador>        ::= IGUAL | DISTINTO | MENOR | MAYOR
+<comparador>        ::= IGUAL | DISTINTO | MENOR | MENOR O IGUAL | MAYOR | MAYOR O IGUAL
 
 <expresion>         ::= <expresion> '+' <termino>
                       | <expresion> '-' <termino>
@@ -233,139 +236,128 @@ El total calculado es:
 
 ![Autómata Finito](../../compilador01/src/assets/Autómata%20Finito.png)
 
-## 11. Matriz de Transición de estados 
+## 11. Matriz de Transición de estados
 
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | Delim. / \n | Espacio / Tab | " | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Comienzo) | E1 | E2 | E3 | E5 | EF | E7 | EF | EF | E0 | E10 | EF |
-| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E5** (MENOR) | EF | EF | EF | EF | E6 | EF | EF | EF | EF | EF | EF |
-| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
-| **E7** (DIVISION) | EF | EF | EF | EF | EF | EF | E8 | EF | EF | EF | EF |
-| **E8** (Comentario) | E8 | E8 | E8 | E8 | E8 | E8 | E9 | E8 | E8 | E8 | E8 |
-| **E9** (Posible fin com.) | E8 | E8 | E8 | E8 | E8 | E0 | E9 | E8 | E8 | E8 | E8 |
-| **E10** (LITERAL_TXT) | E10 | E10 | E10 | E10 | E10 | E10 | E10 | E10 | E10 | EF | E10 |
-| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - |
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | CR | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | E1 | E2 | E3 | E5 | E8 | E10 | E16 | E13 | E14 | E15 | E17 | E18 | E19 | E20 | E21 | E22 | E0 | EF |
+| **E1** (ID / Pal. Reservada) | E1 | E1 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E2** (CTE / Constante) | EF | E2 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E3** (ASIG) | EF | EF | E4 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E4** (IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E5** (MENOR) | EF | EF | E7 | EF | E6 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E6** (DISTINTO) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E7** (MENOR O IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E8** (MAYOR) | EF | EF | E9 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E9** (MAYOR O IGUAL) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E10** (DIVISION) | EF | EF | EF | EF | EF | EF | E11 | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E11** (Comentario) | E11 | E11 | E11 | E11 | E11 | E11 | E12 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 |
+| **E12** (Posible fin comentario) | E11 | E11 | E11 | E11 | E11 | E0 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 | E11 |
+| **E13** (Literal de Texto) | E13 | E13 | E13 | E13 | E13 | E13 | E13 | EF | E13 | E13 | E13 | E13 | E13 | E13 | E13 | E13 | E13 | E13 |
+| **E14** (SUMA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E15** (RESTA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E16** (MULTIPLICACION) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E17** (PAREN_IZQ) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E18** (PAREN_DER) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E19** (LLAVE_IZQ) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E20** (LLAVE_DER) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E21** (COMA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **E22** (FIN_DE_LINEA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
+| **EF** (Salida / Error / Finalización) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
+---
 
+## 12. Matriz de Tokens
 
-## 12. Tabla de Nuevo Estado y Mapeo de Caracteres
-### 12.1 Mapeo de Columnas de Caracteres
+En esta matriz, cada celda indica el código del token que se devuelve cuando el autómata llega a un estado terminal con la clase de entrada indicada. Si la combinación no produce un token directamente, se usa `-1`.
 
-| Índice Columna | Tipo de Carácter | Caracteres Incluidos |
-| :---: | :--- | :--- |
-| **0** | Letra | `a-z`, `A-Z`, `_` |
-| **1** | Dígito | `0-9` |
-| **2** | Igual | `=` |
-| **3** | Menor | `<` |
-| **4** | Mayor | `>` |
-| **5** | Barra Diagonal | `/` |
-| **6** | Asterisco | `*` |
-| **7** | Delim. / \n | `(`, `)`, `{`, `}`, `,`, `\n` |
-| **8** | Espacio / Tab | ` `, `\t`, `\r` |
-| **9** | Comillas Dobles | `"` |
-| **10** | Otro | Cualquier otro símbolo (`#`, `?`, `$`, `%`, etc.) |
-
-### 12.2 Tabla de nuevo estado
-
-```java
-int[11][11] nuevo_estado = {
-    //  0,    1,   2,   3,   4,   5,   6,    7,    8,   9,   10  <- Índices
-    // Let, Dig,   =,   <,   >,   /,   *, Del/\n, Esp,  ", Otro
-    {    1,   2,   3,   5,  -1,   7,  -1,   -1,    0,  10,   -1 }, // E0 (Inicio)
-    {    1,   1,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E1 (ID / Pal. Res)
-    {   -1,   2,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E2 (CTE)
-    {   -1,  -1,   4,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E3 (ASIG)
-    {   -1,  -1,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E4 (IGUAL)
-    {   -1,  -1,  -1,  -1,   6,  -1,  -1,   -1,   -1,  -1,   -1 }, // E5 (MENOR)
-    {   -1,  -1,  -1,  -1,  -1,  -1,  -1,   -1,   -1,  -1,   -1 }, // E6 (DISTINTO)
-    {   -1,  -1,  -1,  -1,  -1,  -1,   8,   -1,   -1,  -1,   -1 }, // E7 (DIVISION)
-    {    8,   8,   8,   8,   8,   8,   9,    8,    8,   8,    8 }, // E8 (Comentario)
-    {    8,   8,   8,   8,   8,   0,   9,    8,    8,   8,    8 }, // E9 (Fin Comentario)
-    {   10,  10,  10,  10,  10,  10,  10,   10,   10,  -1,   10 }  // E10 (LITERAL_TXT)
-};
-```
-
-## 13. Matriz de Tokens
-
-En esta matriz, cada celda indica el código del token que se devuelve cuando el automata llega a un estado terminal con la clase de entrada indicada. Si la combinación no produce un token directamente, se usa `-1`.
-
-
-| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. o \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Comienzo) | -1 | -1 | -1 | -1 | 273 | 278 | 277 | 258 | 279..283 / 284 | -1 | -1 |
-| **E1** (ID / Pal. Reservada) | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | 256 / 259..268 | -1 |
-| **E2** (CTE / Constante) | -1 | 257 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E3** (ASIG) | -1 | -1 | 270 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E4** (IGUAL) | -1 | -1 | 270 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E5** (MENOR) | -1 | -1 | -1 | -1 | 271 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E6** (DISTINTO) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E7** (DIVISION) | -1 | -1 | -1 | -1 | -1 | -1 | 278 | -1 | -1 | -1 | -1 |
-| **E8** (Comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E9** (Posible fin comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-| **E10** (Literal de Texto) | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 | 258 |
-| **EF** (Final / Aceptación) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
-
-### Regla de resolución
-
-- `ID` o palabra reservada: el token se resuelve por el contenido del buffer, no por la clase de entrada. Resultado posible: `256` o `259..268`.
-- `CTE`: el token de constante entera es `257`.
-- `LITERAL_TXT`: el token del texto es `258`.
-- `ASIG`: `269`.
-- `IGUAL`: `270`.
-- `DISTINTO`: `271`.
-- `MENOR`: `272`.
-- `MAYOR`: `273`.
-- `SUMA`: `275`.
-- `RESTA`: `276`.
-- `MULTIPLICACION`: `277`.
-- `DIVISION`: `278`.
-- `Delimitadores y fin de línea`: si el carácter es uno de `(`, `)`, `{`, `}`, `,` o `\n`, el token se devuelve como un conjunto de valores `279..283 / 284` según el caso exacto.
-- `EOF`: `274`.
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | CR | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E1** (ID / Pal. Reservada) | -1 | -1 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 | 256 |
+| **E2** (CTE / Constante) | 257 | -1 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 | 257 |
+| **E3** (ASIG) | -1 | -1 | -1 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 | 269 |
+| **E4** (IGUAL) | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 | 270 |
+| **E5** (MENOR) | 272 | 272 | 273 | 272 | 271 | 272 | 272 | 272 | 272 | 272 | 272 | 272 | 272 | 272 | 272 | 272 | 272 | 272 |
+| **E6** (DISTINTO) | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 | 271 |
+| **E7** (MENOR O IGUAL) | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 | 273 |
+| **E8** (MAYOR) | 274 | 274 | 275 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 | 274 |
+| **E9** (MAYOR O IGUAL) | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 | 275 |
+| **E10** (DIVISION) | 280 | 280 | 280 | 280 | 280 | -1 | 280 | 280 | 280 | 280 | 280 | 280 | 280 | 280 | 280 | 280 | 280 | 280 |
+| **E11** (Comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E12** (Posible fin comentario) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E13** (Literal de Texto) | -1 | -1 | -1 | -1 | -1 | -1 | -1 | 258 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 |
+| **E14** (SUMA) | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 | 277 |
+| **E15** (RESTA) | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 | 278 |
+| **E16** (MULTIPLICACION) | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 | 279 |
+| **E17** (PAREN_IZQ) | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 | 281 |
+| **E18** (PAREN_DER) | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 | 282 |
+| **E19** (LLAVE_IZQ) | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 | 283 |
+| **E20** (LLAVE_DER) | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 | 284 |
+| **E21** (COMA) | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 | 285 |
+| **E22** (FIN_DE_LINEA) | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | -1 | 286 | 286 |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
 
 ---
 
-## 14. Matriz de funciones semánticas
+## 13. Matriz de funciones semánticas
 
-| Estado Actual | Letra | Dígito | = | < | > | / | * | " | Delim. / \n | Espacio / Tab | Otro |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **E0** (Inicial) | F0 | F0 | F0 | F0 | F0 | F0 | F0 | F1 | F7 | F2 | FE |
-| **E1** (ID / Pal. Reservada) | F3 | F3 | F4 | F4 | F4 | F4 | F4 | F4 | F4 | F4 | FE |
-| **E2** (Constante) | F5 | F3 | F5 | F5 | F5 | F5 | F5 | F5 | F5 | F5 | FE |
-| **E3** (ASIG / posible ==) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E4** (IGUAL) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E5** (MENOR / posible <>) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E6** (DISTINTO) | FE | FE | F6 | FE | FE | FE | FE | FE | FE | FE | FE |
-| **E7** (DIVISION / posible comentario) | F3 | F3 | F3 | F3 | F3 | F3 | F8 | F3 | F3 | F3 | F3 |
-| **E8** (Comentario) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 |
-| **E9** (Posible fin comentario) | F3 | F3 | F3 | F3 | F3 | F0 | F3 | F3 | F3 | F3 | FE |
-| **E10** (Literal de Texto) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F11 | F3 | F3 | F3 |
-| **EF** (Final) | - | - | - | - | - | - | - | - | - | - | - |
+| Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | CR | Espacio / Tab | Otro |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **E0** (Comienzo) | F1 | F2 | F1 | F1 | F1 | F1 | F1 | F3 | F1 | F1 | F1 | F1 | F1 | F1 | F1 | F8 | F4 | FE |
+| **E1** (ID / Pal. Reservada) | F5 | F5 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 | F7 |
+| **E2** (CTE / Constante) | FE | F6 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 | F9 |
+| **E3** (ASIG) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E4** (IGUAL) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E5** (MENOR) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E6** (DISTINTO) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E7** (MENOR O IGUAL) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E8** (MAYOR) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E9** (MAYOR O IGUAL) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E10** (DIVISION) | F10 | F10 | F10 | F10 | F10 | F10 | F12 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E11** (Comentario) | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 |
+| **E12** (Posible fin comentario) | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 | F12 |
+| **E13** (Literal de Texto) | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F11 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 | F3 |
+| **E14** (SUMA) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E15** (RESTA) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E16** (MULTIPLICACION) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E17** (PAREN_IZQ) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E18** (PAREN_DER) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E19** (LLAVE_IZQ) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E20** (LLAVE_DER) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E21** (COMA) | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 | F10 |
+| **E22** (FIN_DE_LINEA) | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 | F8 |
+| **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
+
 
 ---
 
-## 15. Definición de las funciones
+## 14. Definición de las funciones
 
-Cada función modifica el buffer, el cursor o el estado del analizador antes de forzar la salida por EF.
+Cada función modifica el buffer, el cursor o el estado del analizador antes de forzar la salida por `EF` o continuar la construcción del token.
 
-* F0 (Inicializar Buffer): limpia el buffer del lexema y almacena el primer carácter leído.
-* F1 (Abrir Literal): prepara el buffer para acumular texto y descarta la comilla de apertura.
-* F2 (Ignorar): no acumula nada, consume espacios, tabuladores o separadores y mantiene el estado en espera.
-* F3 (Acumular): agrega el carácter actual al buffer del lexema para continuar la construcción del token.
-* F4 (Retornar ID o Palabra Reservada): aplica lookahead si corresponde, normaliza la cadena y resuelve si es palabra reservada o identificador. Debe ubicar el token en la tabla de símbolos si corresponde.
-* F5 (Retornar Constante): retrocede un carácter si el automata consumió un carácter de más, valida el rango entero y registra la constante en la tabla de símbolos.
-* F6 (Retornar Token Directo): se usa para tokens unitarios o compuestos cuya clasificación ya está definida por el estado del autómata. Aquí entran los operadores simples y los casos de asignación/igualdad/distinto resueltos en la máquina, sin función especial adicional.
-* F7 (Retornar Fin de Línea): incrementa el contador de líneas del compilador y emite el token de fin de sentencia.
-* F8 (Cerrar Comentario): consume el resto del comentario cuando la barra (/) se reconoce como inicio de comentario y no genera token visible.
+* F1 (Inicializar Buffer de Letras): limpia el buffer de identificadores y palabras reservadas y guarda el primer carácter leído en ese buffer.
+* F2 (Inicializar Buffer de Dígitos): limpia el buffer de constantes enteras y guarda el primer dígito leído, sin reutilizar el mismo buffer que el de letras.
+* F3 (Abrir Literal): prepara el buffer de texto para acumular un literal y descarta la comilla de apertura.
+* F4 (Ignorar): no acumula nada, consume espacios, tabuladores o separadores y mantiene el estado en espera.
+* F5 (Acumular en letras): agrega el carácter actual al buffer de letras para continuar la construcción de un identificador o palabra reservada.
+* F6 (Acumular en dígitos): agrega el carácter actual al buffer de dígitos para continuar la construcción de una constante entera.
+* F7 (Retornar ID o Palabra Reservada): en un estado de aceptación de identificador, inspecciona el siguiente carácter con lookahead para decidir si el identificador terminó o si debe seguir acumulándose. Si el siguiente carácter no pertenece a la secuencia del identificador, se debe hacer `unread` para devolverlo al lector y no perder el delimitador. Luego se normaliza la cadena, se resuelve si es palabra reservada o identificador y se ubica el token en la tabla de símbolos si corresponde.
+* F8 (Retornar Fin de Línea): incrementa el contador de líneas del compilador y emite el token de fin de sentencia.
+* F9 (Retornar Constante): retrocede un carácter si el autómata consumió un carácter de más, valida el rango entero y registra la constante en la tabla de símbolos.
+* F10 (Retornar Token Directo): se usa para tokens unitarios o compuestos cuya clasificación ya está definida por el estado del autómata. Aquí entran los operadores simples y los casos de asignación/igualdad/distinto resueltos en la máquina, sin función especial adicional.
 * F11 (Cerrar Literal): descarta la comilla de cierre, guarda el contenido limpio en la tabla de símbolos y prepara la salida final con token `LITERAL_TXT`.
-* FE (Error Léxico): reporta el carácter inválido, registra la línea y fuerza la salida hacia EF para continuar con la recuperación.
+* F12 (Cerrar Comentario): consume el resto del comentario cuando la barra (`/`) se reconoce como inicio de comentario y no genera token visible.
+* FE (Error Léxico): reporta el carácter inválido, registra la línea y fuerza la salida hacia `EF` para continuar con la recuperación.
+
+En Java, la implementación concreta debe distinguir claramente dos flujos separados:
+- `bufferLetras` acumula letras y dígitos que pertenecen a un identificador o palabra reservada.
+- `bufferDigitos` acumula únicamente dígitos para una constante entera.
+- Nunca se reutiliza el mismo método ni el mismo buffer para ambas cosas; cada flujo tiene su propia función de inicialización y su propia función de acumulación.
 
 ---
 
-## 16. Fuera de alcance
+## 15. Fuera de alcance
 
 * Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.
 * Funciones con más de un (1) parámetro o sin valor de retorno (procedimientos void).
