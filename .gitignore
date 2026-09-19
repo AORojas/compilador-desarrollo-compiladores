@@ -4,7 +4,7 @@
 *.ctxt
 
 # Carpeta de salida de Maven (¡Muy importante!)
-/compilador01/target/
+/Compilador/target/
 
 # Configuraciones locales de Visual Studio Code
 .vscode/
