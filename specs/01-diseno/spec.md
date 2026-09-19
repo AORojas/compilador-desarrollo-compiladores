@@ -234,7 +234,7 @@ El total calculado es:
 ```
 ## 10. Autómata Finito
 
-![Autómata Finito](../../compilador01/src/assets/Autómata%20Finito.png)
+![Autómata Finito](../../Compilador/src/assets/Autómata%20Finito.png)
 
 ## 11. Matriz de Transición de estados
 
