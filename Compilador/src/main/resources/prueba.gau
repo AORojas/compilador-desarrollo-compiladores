@@ -1,0 +1,9 @@
+entero principal()
+{
+    entero numero
+    numero = 10
+    si (numero > 0)
+    {
+        mostrar(numero)
+    }
+}
