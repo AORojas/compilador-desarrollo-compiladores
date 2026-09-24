@@ -11,7 +11,7 @@
 
 ### 1.1 Decisiones Técnicas Fundamentales
 *   **D1 (Tipo de Datos):** Único tipo compatible: **entero con signo de 32 bits** (Rango: `-2.147.483.648` a `2.147.483.647`).
-*   **D2 (Finalización de Línea):** El salto de línea (`\n`) actúa como el token terminador de sentencias **No se utiliza el punto y coma (`;`) ni el retorno de carro (`\r`) como terminador.**
+*   **D2 (Finalización de Línea):** El salto de línea (`\n`) actúa como el token terminador de sentencias. No se utiliza el punto y coma (`;`) ni el retorno de carro (`\r`) como terminador.
 *   **D3 (Gestión de Comentarios):** Los comentarios delimitados por `/*` y `*/` son procesados y totalmente descartados por el analizador léxico, impidiendo que lleguen al parser.
 
 ### 1.2 Alfabeto Oficial
@@ -27,35 +27,39 @@ El léxico clasificará los caracteres del código fuente bajo las siguientes ca
 
 ## 2. Organización de Archivos y Proyecto (Estructura Java)
 
-Para cumplir con la separación estricta de responsabilidades, el código del analizador léxico se modularizará dentro del proyecto de la siguiente manera:
-
 ```text
 src/
-└── compilador/
-    └── lexico/
-        ├── datos/
-        │   ├── MatrizTransicion.java
-        │   ├── MatrizTokens.java
-        │   └── MatrizAcciones.java
-        ├── semantica/
-        │   └── GestorFuncionesSemanticas.java
-        ├── modelo/
-        │   ├── Token.java
-        │   └── TipoToken.java
-        ├── TablaSimbolos.java
-        └── AnalizadorLexico.java
+└── main/
+    ├── java/
+    |   ├── compilador/
+    |   |   └── lexico/
+    |   |       ├── datos/
+    |   |       |   ├── Clasificador.java
+    |   |       │   ├── MatrizAcciones.java
+    |   |       │   ├── MatrizTokens.java
+    |   |       │   └── MatrizTransicion.java
+    |   |       ├── modelo/
+    |   |       │   ├── TipoToken.java
+    |   |       │   └── Token.java
+    |   |       ├── semantica/
+    |   |       │   └── GestorFuncionesSemanticas.java
+    |   |       ├── AnalizadorLexico.java
+    |   |       └── TablaSimbolos.java
+    |   └── Main.java
+    └── resources/
+        └── prueba.gau
 ```
 
 ### Roles de los Archivos Centrales:
-1.  **`AnalizadorLexico.java`**: Posee el lazo principal (`proximoToken()`). Lee caracteres, traduce el carácter a su ID de columna, consulta las tres matrices secuencialmente y controla el estado.
-2.  **`GestorFuncionesSemanticas.java`**: Contiene los buffers independientes del ciclo de vida de los strings y expone métodos individuales (`ejecutarF1` a `ejecutarFE`) invocados por el componente central.
-3.  **Paquete `datos/`**: Almacena de forma dura las matrices numéricas bidimensionales (`int[][]`). No procesa datos, solo responde consultas indexadas.
+1.  **`AnalizadorLexico.java`**: posee el lazo principal (`proximoToken()`). Lee caracteres, traduce el carácter a su ID de columna, consulta la matriz de transición y la matriz de acciones, y devuelve el siguiente token.
+2.  **`GestorFuncionesSemanticas.java`**: contiene los buffers y las funciones semánticas auxiliares que modifican el estado del lexema.
+3.  **Paquete `datos/`**: almacena las matrices definitorias del lenguaje y del flujo del autómata.
+
+> En la implementación actual, además de la transición, la matriz de transición centraliza la decisión de flujo mediante `resolver(...)`, manteniendo `proximoToken()` reducido a una secuencia de llamadas y control del ciclo principal.
 
 ---
 
 ## 3. Clasificación de Caracteres a Columnas (Eventos)
-
-El motor de control traducirá cada carácter leído del archivo en una columna numérica (**0 a 17**) mediante el siguiente mapeo lógico:
 
 | ID Evento (Columna) | Caracteres Mapeados | Descripción Semántica |
 | :---: | :--- | :--- |
@@ -74,15 +78,13 @@ El motor de control traducirá cada carácter leído del archivo en una columna 
 | **12** | `{` | Llave izquierda |
 | **13** | `}` | Llave derecha |
 | **14** | `,` | Coma divisoria |
-| **15** | `\n` | Espacio blanco que actúa como delimitador sintáctico y terminador de sentencias. |
-| **16** |` ` ,`\t`,`\r`| Espacios en blanco / Tabuladores / Retorno de carro (ignorado) |
-| **17** | Cualquier otro | Carácter inválido (Fuera de alfabeto) |
+| **15** | `\n` | Salto de línea |
+| **16** | ` `, `\t`, `\r` | Espacios en blanco / tabulador / retorno de carro |
+| **17** | Cualquier otro | Carácter inválido |
 
 ---
 
 ## 4. Matrices del Autómata Finito
-
-> **Nota de Implementación para Java:** El estado `-1` representa el **Estado Final (`EF`)** de aceptación o detención, lo que indica al lazo del analizador que debe interrumpir la lectura actual y emitir el token correspondiente.
 
 ### 4.1 Matriz de Transición de Estados (`MatrizTransicion.java`)
 
@@ -113,11 +115,7 @@ El motor de control traducirá cada carácter leído del archivo en una columna 
 | **E22** (FIN_DE_LINEA) | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF | EF |
 | **EF** (Salida / Error / Finalización) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
 
----
-
 ### 4.2 Matriz de Asignación de Tokens (`MatrizTokens.java`)
-
-En esta matriz, cada celda indica el código del token que se devuelve cuando el autómata llega a un estado terminal con la clase de entrada indicada. Si la combinación no produce un token directamente, se usa `-1`.
 
 | Estado Actual | Letra | Dígito | = | < | > | / | * | " | + | - | ( | ) | { | } | , | LF | Espacio / Tab / CR | Otro |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -146,11 +144,7 @@ En esta matriz, cada celda indica el código del token que se devuelve cuando el
 | **E22** (FIN_DE_LINEA) | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | 286 | -1 | 286 | 286 |
 | **EF** (Final / Aceptación) | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
 
----
-
-## 4.3 Matriz de Identificadores de Funciones Semánticas (`MatrizAcciones.java`)
-
-Mapea un ID numérico correlativo asignado a cada función semántica calculada según la combinación activa del analizador.
+### 4.3 Matriz de Identificadores de Funciones Semánticas (`MatrizAcciones.java`)
 
 *   `1` -> **F1** | `2` -> **F2** | `3` -> **F3** | `4` -> **F4** | `5` -> **F5** | `6` -> **F6** | `7` -> **F7**
 *   `8` -> **F8** | `9` -> **F9** | `10` -> **F10** | `11` -> **F11** | `12` -> **F12** | `13` -> **FE**
@@ -159,121 +153,178 @@ Mapea un ID numérico correlativo asignado a cada función semántica calculada 
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **E0** | 1 | 2 | 1 | 1 | 1 | 1 | 1 | 3 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 8 | 4 | 13 |
 | **E1** | 5 | 5 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
-| **E2** | 13| 6 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 |
-| **E3** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E4** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E5** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E6** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E7** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E8** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E9** | 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E10**| 10| 10| 10| 10| 10| 10| 12| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E11**| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12|
-| **E12**| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12| 12|
-| **E13**| 3 | 3 | 3 | 3 | 3 | 3 | 3 | 11| 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |
-| **E14**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E15**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E16**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E17**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E18**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E19**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E20**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E21**| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10| 10|
-| **E22**| 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 |
+| **E2** | 13 | 6 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 |
+| **E3** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E4** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E5** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E6** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E7** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E8** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E9** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E10** | 10 | 10 | 10 | 10 | 10 | 10 | 12 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E11** | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 |
+| **E12** | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 |
+| **E13** | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 11 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |
+| **E14** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E15** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E16** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E17** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E18** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E19** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E20** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E21** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| **E22** | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 |
 
 ---
 
 ## 5. Especificación Completa de Funciones Semánticas
 
-Las trece acciones semánticas se implementarán dentro de `GestorFuncionesSemanticas.java`. Las variables internas de buffer se definen estrictamente separadas:
+Las acciones semánticas se implementan dentro de `GestorFuncionesSemanticas.java` y se invocan desde la matriz de acciones según el par `(estado, evento)`.
+
+### 5.1 Buffers internos
 
 ```java
-private StringBuilder bufferLetras = new StringBuilder();
-private StringBuilder bufferDigitos = new StringBuilder();
-private StringBuilder bufferTexto = new StringBuilder();
+private final StringBuilder bufferLetras = new StringBuilder();
+private final StringBuilder bufferDigitos = new StringBuilder();
+private final StringBuilder bufferTexto = new StringBuilder();
 ```
 
-*   **F1 (Inicializar Letras):** Limpia completamente el `bufferLetras` (`setLength(0)`) e introduce el carácter actual recibido.
-*   **F2 (Inicializar Dígitos):** Limpia por completo el `bufferDigitos`. **No comparte espacio con letras para evitar colisiones.** Almacena el primer dígito numérico leído.
-*   **F3 (Abrir/Acumular Cuerpo Texto):** Si el estado actual es `E0`, limpia el `bufferTexto` y descarta la comilla inicial. Si el estado es `E13`, concatena el carácter recibido al cuerpo del literal de texto.
-*   **F4 (Ignorar Caracteres Blancos):** Omite la acumulación de datos en buffers. Mantiene la ejecución limpia y previene la alteración de lexemas válidos debido a espacios, tabuladores o retornos de carro (`
-`).
-*   **F5 (Acumular Letras):** Adiciona el carácter actual (letra o número) al final de la secuencia en ejecución dentro de `bufferLetras`.
-*   **F6 (Acumular Dígitos):** Adiciona el dígito actual al final del `bufferDigitos`.
-*   **F7 (Retornar ID o Palabra Reservada):** 
-    1. Llama al método de relectura (`unread()`) del lector del archivo para devolver el carácter delimitador consumido de más.
-    2. Extrae la cadena de `bufferLetras`.
-    3. Evalúa si el lexema coincide con alguna palabra reservada oficial: `principal`, `entero`, `si`, `bucle`, `hasta`, `mostrar`, `mostrarTexto`, `y`, `o`, `retornar`.
-    4. Si coincide, extrae el token preestablecido (259 al 268). Si no coincide, es un identificador general (`ID`), asigna el ID `256` y lo registra de forma persistente dentro de la `TablaSimbolos`.
-*   **F8 (Retornar Fin de Línea):** Incrementa en una unidad el contador de líneas físico del analizador léxico. Prepara la estructura para emitir el token de control `286` (`FIN_DE_LINEA`).
-*   **F9 (Retornar Constante Entera):**
-    1. Ejecuta el método `unread()` para devolver el delimitador consumido.
-    2. Convierte el valor String de `bufferDigitos` a un número de tipo primitivo `long` para evaluar desbordamiento.
-    3. **Validación Semántica:** Si el valor está fuera del rango de 32 bits firmado (`-2147483648` a `2147483647`), interrumpe la entrega normal del token y levanta el código de error `E2` (Constante numérica mal formada o fuera de límite).
-    4. Si pasa la prueba, lo registra en la `TablaSimbolos` bajo el token genérico `257`.
-*   **F10 (Retornar Token Directo):** No requiere alteración o lectura de buffers intermedios. Resuelve operadores matemáticos de un solo carácter o construcciones lógicas completas y devuelve su código directo.
-*   **F11 (Cerrar Literal):** Descarta la comilla de cierre de la cadena. Almacena la cadena textual limpia extraída de `bufferTexto` en la `TablaSimbolos` devolviendo el identificador `258`.
-*   **F12 (Gestionar Bloque Comentario):** Si la secuencia de entrada coincide con los operadores de apertura `/*`, cambia el flujo e ignora todo elemento secuencial posterior hasta emparejar con el delimitador de salida `*/`. Restablece el autómata al estado base `E0` de forma transparente.
-*   **FE (Error Léxico):** Detiene el proceso secuencial en curso, extrae la línea física actual mediante el rastreador del compilador, añade un reporte detallado con el código de error `E1` y obliga a la máquina a saltar a `EF` para activar la estrategia de recuperación de pánico.
+### 5.2 Descripción de cada función
+
+*   **F1 (Inicializar Letras):** limpia el `bufferLetras` y guarda la primera letra.
+*   **F2 (Inicializar Dígitos):** limpia el `bufferDigitos` y guarda el primer dígito.
+*   **F3 (Abrir/Acumular Cuerpo Texto):** si está en estado base, limpia `bufferTexto`; si ya está dentro del literal, acumula el carácter.
+*   **F4 (Ignorar Caracteres Blancos):** descarta espacios, tabs y CR.
+*   **F5 (Acumular Letras):** agrega el carácter actual al identificador.
+*   **F6 (Acumular Dígitos):** agrega el dígito actual a la constante.
+*   **F7 (Retornar ID o Palabra Reservada):** hace `unread` del delimitador y retorna la palabra reservada o `ID`.
+*   **F8 (Retornar Fin de Línea):** marca el fin de la línea y genera `FIN_DE_LINEA`.
+*   **F9 (Retornar Constante Entera):** valida rango y devuelve `CTE`.
+*   **F10 (Retornar Token Directo):** resuelve operadores o delimitadores de un solo carácter.
+*   **F11 (Cerrar Literal):** devuelve `LITERAL_TXT` y registra el contenido.
+*   **F12 (Gestionar Bloque Comentario):** ignora el contenido hasta `*/`.
+*   **FE (Error Léxico):** dispara error `E1` por carácter no permitido.
 
 ---
 
 ## 6. Lógica de Despacho y Motor de Control
 
-El esqueleto del método principal dentro de `AnalizadorLexico.java` implementará el procesamiento dinámico orientado a tablas mediante la siguiente lógica algorítmica estructurada:
+El flujo principal del analizador debe seguir esta secuencia:
+
+1. Lee un carácter.
+2. Lo clasifica con `Clasificador.obtenerColumna(c)`.
+3. Consulta la matriz de transición para decidir el siguiente estado.
+4. Consulta la matriz de acciones para ejecutar la función semántica correspondiente.
+5. Si corresponde, devuelve el token o continúa leyendo.
 
 ```java
-public class AnalizadorLexico {
-   
-    public static final int EF = -1; 
-    
-    private int estadoActual = 0; // E0 (Estado inicial de espera)
-    private GestorFuncionesSemanticas gestorSemantico;
-    private CustomReader lector; // Flujo que soporta la operación unread()
+int evento = Clasificador.obtenerColumna(c);
+int siguiente = MatrizTransicion.siguiente(estadoActual, evento);
+int accion = MatrizAcciones.accion(estadoActual, evento);
 
-    public Token proximoToken() throws IOException {
-        estadoActual = 0; // Se reinicia a E0 para comenzar a buscar el siguiente token
-        char caracterActual;
-        
-        // El lazo se controla directamente usando la abstracción de la constante
-        while (estadoActual != EF) { 
-            int codigoLeido = lector.read();
-            if (codigoLeido == -1) { 
-                return new Token(276, "EOF"); 
-            }
-            caracterActual = (char) codigoLeido;
-            
-            // 1. Obtener la columna (evento) asociada al carácter (0 a 17)
-            int idEvento = Clasificador.obtenerColumna(caracterActual);
-            
-            // 2. Recuperar y despachar la acción semántica mapeada (F1 a FE)
-            int idAccion = MatrizAcciones.getAccionSemantica(estadoActual, idEvento);
-            gestorSemantico.ejecutarAccion(idAccion, caracterActual);
-            
-            // 3. Transicionar al siguiente estado de la máquina
-            int nuevoEstado = MatrizTransicion.getSiguienteEstado(estadoActual, idEvento);
-            
-            // Evaluamos la transición directamente con la constante estipulada
-            if (nuevoEstado == EF) {
-                // Se alcanzó el corte por aceptación. Resolver Token final.
-                int idToken = MatrizTokens.getTokenAsociado(estadoActual, idEvento);
-                
-                if (idToken == -1) {
-                    // Si es una combinación inválida de la matriz de tokens,
-                    // se reestabiliza el motor en E0 y se continúa la lectura.
-                    estadoActual = 0; 
-                    continue;
-                }
-                
-                // Recuperar el contenido final limpio acumulado en el gestor
-                String lexema = gestorSemantico.obtenerLexemaActual(idToken);
-                return new Token(idToken, lexema);
-            }
-            
-            // Si la máquina no terminó, progresa al siguiente estado intermedio
-            estadoActual = nuevoEstado;
-        }
-        return null;
-    }
+if (accion != -1) {
+    MatrizAcciones.ejecutarAccion(estadoActual, evento, c, gestor);
 }
+
+estadoActual = siguiente;
 ```
+
+En la implementación actual esta lógica queda encapsulada en `MatrizTransicion.resolver(...)`, dejando `proximoToken()` más limpio y con menos ramificaciones manuales.
+
+---
+
+## 7. Tokens del Lenguaje
+
+| Nombre | Código |
+| --- | ---: |
+| `ID` | 256 |
+| `CTE` | 257 |
+| `LITERAL_TXT` | 258 |
+| `PRINCIPAL` | 259 |
+| `ENTERO` | 260 |
+| `SI` | 261 |
+| `BUCLE` | 262 |
+| `HASTA` | 263 |
+| `MOSTRAR` | 264 |
+| `MOSTRAR_TXT` | 265 |
+| `Y` | 266 |
+| `O` | 267 |
+| `RETORNAR` | 268 |
+| `ASIG` | 269 |
+| `IGUAL` | 270 |
+| `DISTINTO` | 271 |
+| `MENOR` | 272 |
+| `MENOR_IGUAL` | 273 |
+| `MAYOR` | 274 |
+| `MAYOR_IGUAL` | 275 |
+| `EOF` | 276 |
+| `SUMA` | 277 |
+| `RESTA` | 278 |
+| `MULTIPLICACION` | 279 |
+| `DIVISION` | 280 |
+| `PAREN_IZQ` | 281 |
+| `PAREN_DER` | 282 |
+| `LLAVE_IZQ` | 283 |
+| `LLAVE_DER` | 284 |
+| `COMA` | 285 |
+| `FIN_DE_LINEA` | 286 |
+
+---
+
+## 8. Palabras Reservadas
+
+La lista oficial soportada por el analizador es:
+
+- `principal`
+- `entero`
+- `si`
+- `bucle`
+- `hasta`
+- `mostrar`
+- `mostrarTexto`
+- `y`
+- `o`
+- `retornar`
+
+---
+
+## 9. Reglas de Error Léxico
+
+Se consideran errores léxicos:
+
+- cualquier carácter fuera del alfabeto definido
+- literal de texto sin cierre
+- comentario sin cerrar
+- constante numérica inválida
+- constante numérica fuera del rango permitido
+
+La constante entera soportada debe cumplir:
+
+$$
+-2^{31} \leq valor \leq 2^{31}-1
+$$
+
+---
+
+## 10. Conclusión
+
+La especificación mantiene la estructura original de matrices del autómata para preservar el diseño table-driven, pero refleja la implementación actual en la que la lógica de resolución del estado se centraliza en `MatrizTransicion`, mientras `MatrizAcciones` sigue siendo responsable de la ejecución de las acciones semánticas. Este modelo permite una mejor modularización, reutilización y generación del compilador en futuras iteraciones.
+
+```cpp
+estado = 0;
+while (estado != EF)
+{
+    c = leer();
+    evento = clasificar(c);
+    nuevoEstado = matrizTransicion[estado][evento];
+    idAccion = matrizAcciones[estado][evento];
+
+    if (idAccion != -1)
+        ejecutarFuncionSemantica(idAccion, c, estado, evento);
+
+    estado = nuevoEstado;
+}
+return tokenReconocido;
+```
+
+Con este enfoque, la estructura del compilador queda ordenada: matrices para transición, matrices para acciones y funciones semánticas para la lógica de cada token.
