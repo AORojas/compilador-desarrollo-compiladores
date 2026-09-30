@@ -21,6 +21,11 @@ public class Main {
                 token = lexico.proximoToken();
                 System.out.println(token);
             } while (token.getCodigo() != TipoToken.EOF);
+
+            System.out.println();
+            System.out.println("=== Tabla de simbolos ===");
+            lexico.getTablaSimbolos().todos().forEach((lexema, codigo) ->
+                    System.out.println(lexema + " -> " + codigo));
         } catch (IOException e) {
             System.err.println(e.getMessage());
             System.exit(1);

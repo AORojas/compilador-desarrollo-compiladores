@@ -1,7 +1,5 @@
 package compilador.lexico;
 
-import compilador.lexico.modelo.TipoToken;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
