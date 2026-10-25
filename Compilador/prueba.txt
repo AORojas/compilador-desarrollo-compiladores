@@ -1,0 +1,6 @@
+x = 42
+si (x == 42)
+{
+    mostrar("Es la respuesta")
+}
+/* Comentario final */

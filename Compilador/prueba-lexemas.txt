@@ -1,0 +1,9 @@
+entero contador = 12
+contador < 20
+contador > 0
+contador + 3 - 1
+(contador == 14)
+{contador, 12}
+contador * 2
+mostrar("prueba de lexemas")
+/* comentario de prueba */
