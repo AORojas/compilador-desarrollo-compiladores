@@ -1,0 +1,27 @@
+# Variables de entorno locales y secretos
+.env
+.env.*
+!.env.example
+
+# Java: compilación y empaquetado
+*.class
+*.jar
+*.war
+target/
+out/
+build/
+
+# IDEs y editores
+.idea/
+.vscode/
+*.iml
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs y archivos temporales
+*.log
+*.tmp
+*.temp
