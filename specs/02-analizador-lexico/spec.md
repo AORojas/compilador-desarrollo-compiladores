@@ -51,8 +51,9 @@ E20: {EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF
 E21: {EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF}
 E22: {EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF}
 EF:  {EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF, EF}
-### 3.3. Matriz de Tokens (TOKEN)
-*Filas: E0 a E22 y EF. Si la celda es -1, no emite token.*
+```
+### 3.3. Matriz de Tokens (`TOKEN`)
+*Si la celda es -1, no emite token.*
 ```text
 E0:  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 E1:  {-1, -1, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256}
@@ -79,7 +80,7 @@ E21: {285, 285, 285, 285, 285, 285, 285, 285, 285, 285, 285, 285, 285, 285, 285,
 E22: {286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286, 286}
 EF:  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 ```
-### 3.4. Matriz de Funciones (FUNCION)
+### 3.4. Matriz de Funciones (`FUNCIÓN`)
 *El agente debe crear una interfaz Func y mapear las referencias a métodos de la clase Funciones.*
 *Las celdas con null significan que el autómata transiciona y no ejecuta función. Las celdas con f15 acumulan el segundo carácter de un operador de 2 símbolos.*
 ```text
