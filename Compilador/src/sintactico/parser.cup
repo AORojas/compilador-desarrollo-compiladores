@@ -1,0 +1,54 @@
+package sintactico;
+
+import java_cup.runtime.*;
+
+parser code {:
+    public void report_error(String message, Object info) {
+        System.err.println("Error sintáctico: " + message);
+    }
+:};
+
+action code {:
+    // acciones semánticas del parser
+:};
+
+terminal ENTERO, PRINCIPAL, SI, BUCLE, HASTA, MOSTRAR, RETORNAR, ID, CTE;
+terminal ASIG, IGUAL, DISTINTO, MENOR, MENOR_IGUAL, MAYOR, MAYOR_O_IGUAL;
+terminal SUMA, RESTA, MULTIPLICACION, DIVISION, PAREN_IZQ, PAREN_DER;
+terminal LLAVE_IZQ, LLAVE_DER, COMA, FIN_DE_LINEA;
+
+non terminal programa, bloque, sentencia, declaracion, asignacion, expresion, termino, factor;
+
+precedence left SUMA, RESTA;
+precedence left MULTIPLICACION, DIVISION;
+
+programa ::= PRINCIPAL PAREN_IZQ PAREN_DER bloque ;
+
+bloque ::= LLAVE_IZQ sentencia LLAVE_DER ;
+
+sentencia ::= declaracion
+            | asignacion
+            | MOSTRAR PAREN_IZQ expresion PAREN_DER
+            | RETORNAR expresion
+            ;
+
+declaracion ::= ENTERO ID
+              | ENTERO ID COMA declaracion
+              ;
+
+asignacion ::= ID ASIG expresion ;
+
+expresion ::= expresion SUMA termino
+            | expresion RESTA termino
+            | termino
+            ;
+
+termino ::= termino MULTIPLICACION factor
+          | termino DIVISION factor
+          | factor
+          ;
+
+factor ::= ID
+         | CTE
+         | PAREN_IZQ expresion PAREN_DER
+         ;

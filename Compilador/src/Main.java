@@ -1,27 +1,30 @@
+import java.io.File;
 import java.util.Map;
 
 import lexico.AnalizadorLexico;
 import lexico.ContextoLexico;
+import sintactico.Parser;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        String archivo = args.length > 0 ? args[0] : "Compilador/prueba.txt";
+        String archivo = seleccionarArchivo(args);
 
         try (AnalizadorLexico analizador = new AnalizadorLexico(archivo)) {
-            int token;
-            do {
-                token = analizador.yylex();
-                ContextoLexico ctx = analizador.getContexto();
-                if (token != 276) {
-                    System.out.println("Token: " + token + " | Lexema: " + ctx.lexemaActual
-                            + " | Línea: " + analizador.getLinea());
-                }
-            } while (token != 276);
+            Parser parser = new Parser(analizador);
+            parser.parse();
+
+            System.out.println("Análisis sintáctico finalizado correctamente.");
+            System.out.println("Polaca Inversa:");
+            System.out.println(parser.getPolaca().print());
 
             ContextoLexico ctx = analizador.getContexto();
-            for (String error : ctx.errores) {
-                System.err.println(error);
+            if (!ctx.errores.isEmpty()) {
+                System.err.println("Errores léxicos:");
+                for (String error : ctx.errores) {
+                    System.err.println(error);
+                }
             }
+
             if (!ctx.tablaSimbolos.isEmpty()) {
                 System.out.println("Tabla de símbolos:");
                 for (Map.Entry<String, String> simbolo : ctx.tablaSimbolos.entrySet()) {
@@ -29,5 +32,26 @@ public class Main {
                 }
             }
         }
+    }
+
+    private static String seleccionarArchivo(String[] args) {
+        if (args.length > 0) {
+            return args[0];
+        }
+
+        String[] candidatos = {
+            "prueba-sintactico.txt",
+            "Compilador/prueba-sintactico.txt",
+            "../Compilador/prueba-sintactico.txt"
+        };
+
+        for (String candidato : candidatos) {
+            File archivo = new File(candidato);
+            if (archivo.exists()) {
+                return candidato;
+            }
+        }
+
+        return "prueba-sintactico.txt";
     }
 }
