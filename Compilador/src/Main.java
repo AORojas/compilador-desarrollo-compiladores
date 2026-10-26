@@ -5,7 +5,7 @@ import lexico.ContextoLexico;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        String archivo = args.length > 0 ? args[0] : "prueba.txt";
+        String archivo = args.length > 0 ? args[0] : "Compilador/prueba.txt";
 
         try (AnalizadorLexico analizador = new AnalizadorLexico(archivo)) {
             int token;
