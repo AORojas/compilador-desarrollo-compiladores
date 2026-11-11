@@ -19,13 +19,36 @@ public class AnalizadorLexico implements AutoCloseable {
         while (!estado.equals(Matrices.EF)) {
             int c = lector.nextChar();
             
-            // Si llegamos al final del archivo, retornamos EOF
             if (c == -1) {
-                return 276;
+                if (Matrices.E0.equals(estado)
+                        || "E11".equals(estado)
+                        || "E12".equals(estado)) {
+                    return 276;
+                }
+                if ("E13".equals(estado)) {
+                    ctx.errores.add(
+                        "Línea " + lector.getLinea() + ": Error léxico, literal de texto sin cerrar.");
+                    return 276;
+                }
+
+                int fila = Matrices.fila(estado);
+                int col = 18;
+                ctx.filaActual = fila;
+                ctx.colActual = col;
+                Matrices.Func funcion = Matrices.FUNCION[fila][col];
+                if (funcion != null) {
+                    funcion.ejecutar(ctx, c);
+                }
+                return ctx.tokenActual == -1 ? 276 : ctx.tokenActual;
             }
 
             int fila = Matrices.fila(estado);
             int col = Clasificador.getEvento(c);
+
+            if (Matrices.E0.equals(estado) && col != 15 && col != 17) {
+                ctx.lineaToken = lector.getUltimaLineaLeida();
+                ctx.columnaToken = lector.getUltimaColumnaLeida();
+            }
 
             // Guardamos las coordenadas para que f10 resuelva el token
             ctx.filaActual = fila;
@@ -66,6 +89,18 @@ public class AnalizadorLexico implements AutoCloseable {
 
     public int getLinea() {
         return lector.getLinea();
+    }
+
+    public int getColumna() {
+        return lector.getColumna();
+    }
+
+    public int getLineaToken() {
+        return ctx.lineaToken;
+    }
+
+    public int getColumnaToken() {
+        return ctx.columnaToken;
     }
 
     @Override

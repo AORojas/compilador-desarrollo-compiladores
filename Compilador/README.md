@@ -1,11 +1,12 @@
-# Analizador léxico GAUCHO
+# Compilador GAUCHO
 
-Analizador léxico para GAUCHO, implementado en Java. Lee un archivo de texto carácter por carácter y devuelve tokens con su código y lexema. También mantiene una tabla de símbolos y registra errores léxicos.
+Analizador léxico y sintáctico para GAUCHO, implementado en Java. El análisis sintáctico usa Java CUP y el analizador léxico existente.
 
 ## Requisitos
 
 - JDK instalado, con `javac` y `java` disponibles en la terminal.
-- Bash, PowerShell o una terminal equivalente.
+- Bash.
+- Java CUP `11b-20160615`, incluido como `cup.jar`.
 
 ## Estructura
 
@@ -13,48 +14,57 @@ Analizador léxico para GAUCHO, implementado en Java. Lee un archivo de texto ca
 Compilador/
 ├── src/
 │   ├── Main.java
-│   └── lexico/
-│       ├── AnalizadorLexico.java
-│       ├── Clasificador.java
-│       ├── ContextoLexico.java
-│       ├── Funciones.java
-│       ├── Lector.java
-│       └── Matrices.java
+│   ├── lexico/
+│   └── sintactico/
+│       ├── LexerCupAdapter.java
+│       ├── Simbolo.java
+│       ├── TablaSimbolos.java
+│       ├── GestorAmbitos.java
+│       ├── PolacaInversa.java
+│       ├── ErrorSemantico.java
+│       ├── Condicion.java
+│       └── parser.cup
+├── cup.jar
+├── prueba-sintactico.txt
 ├── prueba.txt
-├── prueba-lexemas.txt
-└── README.md
+└── prueba-lexemas.txt
 ```
+
+CUP genera `Parser.java` y `sym.java` a partir de `src/sintactico/parser.cup`.
 
 ## Compilar y ejecutar desde Bash
 
-Ejecuta estos comandos desde la carpeta raíz del proyecto:
+Ejecuta estos comandos desde `Compilador/`:
 
 ```bash
+java -cp cup.jar java_cup.Main -package sintactico -parser Parser -symbols sym -destdir src/sintactico src/sintactico/parser.cup
 mkdir -p out
-javac -encoding UTF-8 -d out src/Main.java src/lexico/*.java
+javac -encoding UTF-8 -cp cup.jar -d out src/Main.java src/lexico/*.java src/sintactico/*.java
+java -cp "out;cup.jar" Main
 ```
 
-Para analizar el archivo de prueba predeterminado:
+El JAR de CUP no declara `Main-Class`; invoca el generador con `java -cp cup.jar java_cup.Main`, no con `java -jar`. El classpath usa `;`, separador de Java en Windows, también al ejecutar desde Bash.
+
+`Main` analiza `prueba-sintactico.txt` por defecto. Para elegir otro archivo:
 
 ```bash
-java -cp out Main
+java -cp "out;cup.jar" Main ruta/al/archivo.txt
 ```
 
-`Main` usa `prueba.txt` cuando no se proporciona una ruta. Para seleccionar otro archivo, pásalo como argumento:
+## Pruebas de regresión del frontend
+
+Después de generar CUP y compilar el proyecto, ejecuta desde `Compilador/`:
 
 ```bash
-java -cp out Main prueba-lexemas.txt
+javac -encoding UTF-8 -cp "out;cup.jar" -d out tests/FrontendRegressionTest.java
+java -cp "out;cup.jar" FrontendRegressionTest
 ```
 
-También puedes analizar otro archivo de texto:
+La suite comprueba tokens adyacentes y EOF, precedencia aritmética, ámbitos, errores semánticos, llamadas, recuperación y destinos de salto para condiciones agrupadas y ciclos. Verifica estructuralmente la Polaca; el proyecto todavía no incluye una máquina que la ejecute.
 
-```bash
-java -cp out Main ruta/al/archivo.txt
-```
+## Pruebas léxicas
 
-## Ejemplo de entrada
-
-`prueba-lexemas.txt` contiene una muestra de identificadores, constantes, operadores, delimitadores, texto y un comentario:
+`prueba-lexemas.txt` contiene identificadores, constantes, operadores, delimitadores, texto y un comentario:
 
 ```text
 entero contador = 12
@@ -68,25 +78,19 @@ mostrar("prueba de lexemas")
 /* comentario de prueba */
 ```
 
-La salida muestra el código del token, su lexema y la línea. Por ejemplo:
-
-```text
-Token: 260 | Lexema: entero | Línea: 1
-Token: 256 | Lexema: contador | Línea: 1
-Token: 269 | Lexema: = | Línea: 1
-Token: 257 | Lexema: 12 | Línea: 1
-```
-
-Los saltos de línea se devuelven como token `286`. El fin de archivo es `276` y se usa para terminar el ciclo de lectura; no se imprime como token en `Main`.
+Los saltos de línea son el token `286`; el fin de archivo léxico es `276`. Identificadores, constantes numéricas y literales entre comillas usan los tokens `256`, `257` y `258`, respectivamente.
 
 ## Componentes principales
 
-- **`Main`**: selecciona el archivo, solicita tokens al analizador e imprime los resultados, errores y tabla de símbolos.
-- **`Lector`**: lee caracteres con `PushbackReader`, cuenta líneas y permite devolver un carácter para que se analice de nuevo.
-- **`Clasificador`**: convierte cada carácter en una de las 19 columnas de evento usadas por las matrices.
-- **`Matrices`**: contiene las matrices de transición, tokens y funciones semánticas.
-- **`Funciones`**: implementa las acciones semánticas, como acumular letras, finalizar identificadores y guardar constantes.
-- **`ContextoLexico`**: conserva los buffers, el lexema y token actuales, la tabla de símbolos y los errores.
-- **`AnalizadorLexico`**: coordina la lectura, clasificación, consulta de matrices y emisión de cada token.
+- **`Main`**: conecta el analizador léxico con CUP, ejecuta el parser y reporta errores.
+- **`AnalizadorLexico`**: reconoce tokens y conserva sus lexemas y ubicaciones.
+- **`LexerCupAdapter`**: convierte códigos léxicos en `java_cup.runtime.Symbol`; pasa los lexemas de identificadores, constantes y literales.
+- **`Simbolo`, `TablaSimbolos` y `GestorAmbitos`**: conservan identificadores únicos y resuelven variables por ámbito.
+- **`PolacaInversa`**: representa referencias, operadores y destinos de salto pendientes.
+- **`Condicion`**: conserva las listas de saltos verdaderos y falsos para el backpatching de condiciones.
+- **`parser.cup`**: define funciones, bloques, sentencias, expresiones aritméticas y condiciones, y ejecuta sus acciones semánticas.
+- **`Lector`, `Clasificador`, `Matrices` y `Funciones`**: implementan la lectura y el reconocimiento léxico.
 
-El analizador reconoce `entero` (token `260`) y `si` (token `261`) como palabras reservadas; las demás palabras se tratan como identificadores (token `256`). Las constantes numéricas usan el token `257` y los literales entre comillas, el token `258`.
+El parser valida sintaxis, identificadores declarados (R1), duplicados en el mismo ámbito (R2) y hasta tres niveles anidados de `si`/`bucle` (R3). Los ámbitos de `si` y `bucle` son locales; se permite ocultar nombres de ámbitos externos, pero no repetir el nombre de un parámetro en el ámbito de su función. No hay variables globales. La tabla registra variables, funciones y constantes; la Polaca usa referencias a símbolos y saltos resueltos mediante backpatching. Las condiciones `y`/`o` generan saltos de cortocircuito, y las llamadas de un argumento generan `CALL` con resolución diferida de funciones. Si hay errores, se muestra la tabla, pero no se presenta la Polaca como válida.
+
+La salida intermedia no se ejecuta todavía: la validación de cortocircuito comprueba el grafo de flujo representado por los destinos `BF`/`BI`. La precedencia entre `y` y `o` sin paréntesis continúa pendiente de confirmación; usa paréntesis para fijar explícitamente el agrupamiento.

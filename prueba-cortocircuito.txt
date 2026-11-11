@@ -1,0 +1,11 @@
+entero principal()
+{
+    entero a, b
+    a = 0
+    b = 10
+
+    si (a > 0 y b > 0)
+    {
+        mostrar(b)
+    }
+}

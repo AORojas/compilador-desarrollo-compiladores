@@ -16,6 +16,8 @@ public class ContextoLexico {
     public int tokenActual = -1;
     public int filaActual = 0;
     public int colActual = 0;
+    public int lineaToken = -1;
+    public int columnaToken = -1;
     public boolean debeHacerUnread = false;
     public Lector lector;
 
@@ -26,6 +28,8 @@ public class ContextoLexico {
         bufferLexema.setLength(0);
         lexemaActual = "";
         tokenActual = -1;
+        lineaToken = -1;
+        columnaToken = -1;
         debeHacerUnread = false;
     }
 }

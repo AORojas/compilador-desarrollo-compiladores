@@ -5,11 +5,15 @@
 
 # Java: compilación y empaquetado
 *.class
-*.jar
 *.war
 target/
 out/
 build/
+Compilador/src/sintactico/Parser.java
+Compilador/src/sintactico/sym.java
+
+# Dependencia necesaria para generar y compilar el parser CUP
+!Compilador/cup.jar
 
 # IDEs y editores
 .idea/

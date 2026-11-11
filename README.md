@@ -1,95 +1,68 @@
-# Compilador 2026
+# Compilador GAUCHO
 
-## Integrantes
+Trabajo práctico universitario de desarrollo de compiladores (Grupo D). El proyecto implementa un compilador educativo para el lenguaje fuente GAUCHO, escrito en Java.
 
-| Nombre             | Legajo | Rol |
-|--------------------|--------|-----|
-|Orrego Rojas Adrian |        |     |
-|Viggiano Cristian   |9125    |     |
+## Alcance actual
 
-## TP asignado
+- **Análisis léxico:** reconoce palabras reservadas, identificadores, constantes, operadores y delimitadores.
+- **Análisis sintáctico:** usa Java CUP para reconocer funciones, bloques, declaraciones, asignaciones, condiciones y estructuras de control.
+- **Análisis semántico:** mantiene tabla de símbolos y ámbitos; detecta identificadores no declarados, declaraciones duplicadas y más de tres niveles de `si`/`bucle`. Comprueba llamadas a funciones de un argumento.
+- **Código intermedio:** genera Polaca Inversa para expresiones aritméticas, asignaciones, comparaciones, llamadas y control de flujo. Las condiciones `y`/`o` usan saltos `BF`/`BI` para cortocircuito.
 
-Trabajo Práctico -- Desarrollo de un Compilador
+La Polaca Inversa es la salida intermedia del proyecto; actualmente no se ejecuta. La generación de código Assembler y su ejecución quedan para una etapa posterior.
 
-GRUPO D
+## Limitación de precedencia lógica
 
-## Lenguaje
+La precedencia entre `y` y `o` cuando aparecen mezclados sin paréntesis todavía no está definida. Para expresar claramente la intención, agrupa las condiciones con paréntesis, por ejemplo:
 
-- **Lenguaje fuente:** Gaucho
-- **Lenguaje de implementación:** Java
-- **Arquitectura destino:** _(assembler generado)_
+```gaucho
+si ((a > 0 y b > 0) o c == 1)
+{
+    mostrar(a)
+}
+```
 
-## Compilar y ejecutar desde Bash
+## Requisitos
 
-Ejecuta estos comandos desde la carpeta raíz del proyecto:
+- JDK con `java` y `javac`.
+- Bash.
+- Java CUP `11b-20160615`, disponible en `Compilador/cup.jar`.
+
+## Compilar y ejecutar
+
+Desde Bash, cambia al directorio `Compilador/`:
 
 ```bash
+cd Compilador
+java -cp cup.jar java_cup.Main -package sintactico -parser Parser -symbols sym -destdir src/sintactico src/sintactico/parser.cup
 mkdir -p out
-javac -encoding UTF-8 -d out src/Main.java src/lexico/*.java
+javac -encoding UTF-8 -cp cup.jar -d out src/Main.java src/lexico/*.java src/sintactico/*.java
+java -cp 'out;cup.jar' Main
 ```
 
-Para analizar el archivo de prueba predeterminado:
+`Main` analiza `prueba-sintactico.txt` por defecto. Para analizar otro archivo:
 
 ```bash
-java -cp out Main
+java -cp 'out;cup.jar' Main ruta/al/archivo.txt
 ```
 
-`Main` usa `prueba.txt` cuando no se proporciona una ruta. Para seleccionar otro archivo, pásalo como argumento:
+El JAR de CUP no declara `Main-Class`, por eso se invoca mediante `java -cp cup.jar java_cup.Main`. El separador `;` del classpath corresponde a Java en Windows, incluso al ejecutar desde Git Bash.
+
+## Pruebas de regresión
+
+Después de generar CUP y compilar las fuentes:
 
 ```bash
-java -cp out Main prueba-lexemas.txt
+javac -encoding UTF-8 -cp 'out;cup.jar' -d out tests/FrontendRegressionTest.java
+java -cp 'out;cup.jar' FrontendRegressionTest
 ```
 
-También puedes analizar otro archivo de texto:
+La suite comprueba el lexer, EOF, precedencia aritmética, ámbitos, validaciones semánticas, llamadas, recuperación y destinos de salto. La validación de cortocircuito es estructural: no hay todavía una máquina virtual que ejecute la Polaca.
 
-```bash
-java -cp out Main ruta/al/archivo.txt
-```
+## Archivos principales
 
-> **Nota:** En esta etapa, los comandos corresponden específicamente a la compilación y ejecución del **analizador léxico**. La ruta del archivo de entrada puede modificarse para realizar diferentes pruebas sobre el análisis léxico.
-
-# Estructura del Repositorio
-
-```text
-compilador-desarrollo-compiladores/
-├── Compilador/
-│   ├── out/
-│   ├── src/
-│   │   ├── assets/
-│   │   │   ├── Automata Finito.drawio
-│   │   │   └── Automata Finito.png
-│   │   └── lexico/
-│   │       ├── AnalizadorLexico.java
-│   │       ├── Clasificador.java
-│   │       ├── ContextoLexico.java
-│   │       ├── Funciones.java
-│   │       ├── Lector.java
-│   │       └── Matrices.java
-│   ├── out/
-│   ├── Main.java
-│   ├── prueba-lexemas.txt
-│   ├── prueba.txt
-│   └── README.md
-│
-├── specs/
-│   ├── 01-diseño/
-│   │   ├── bitacora.md
-│   │   └── spec.md
-│   ├── 02-analizador-léxico/
-│   │   ├── bitacora.md
-│   │   └── spec.md
-│   ├── 03-analizador-sintáctico/
-│   │   └── sintactico.md
-│   ├── 04-analizador-semántico/
-│   ├── GC/
-│   │   └── codigo.md
-│   └── GCA/
-│       └── readme.md
-│
-├── .env
-├── .gitignore
-└── README.md
-```
-
-
-        
+- `Compilador/src/lexico/`: analizador léxico y sus matrices.
+- `Compilador/src/sintactico/parser.cup`: gramática CUP y acciones semánticas.
+- `Compilador/src/sintactico/`: adaptador CUP, tabla de símbolos, ámbitos, Polaca Inversa y clases auxiliares.
+- `Compilador/tests/FrontendRegressionTest.java`: pruebas de regresión del frontend.
+- `specs/`: especificaciones y documentación del trabajo.

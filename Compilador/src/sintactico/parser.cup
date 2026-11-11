@@ -1,0 +1,470 @@
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java_cup.runtime.Symbol;
+
+parser code {:
+    private int erroresSintacticos;
+    private final TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    private final GestorAmbitos gestorAmbitos = new GestorAmbitos(tablaSimbolos);
+    private final PolacaInversa polaca = new PolacaInversa();
+    private final List<ErrorSemantico> erroresSemanticos = new ArrayList<ErrorSemantico>();
+    private final Deque<MarcoControl> controles = new ArrayDeque<MarcoControl>();
+    private final List<LlamadaPendiente> llamadasPendientes = new ArrayList<LlamadaPendiente>();
+    private int profundidadControl;
+
+    public int getErroresSintacticos() {
+        return erroresSintacticos;
+    }
+
+    public TablaSimbolos getTablaSimbolos() {
+        return tablaSimbolos;
+    }
+
+    public PolacaInversa getPolaca() {
+        return polaca;
+    }
+
+    public List<ErrorSemantico> getErroresSemanticos() {
+        return new ArrayList<ErrorSemantico>(erroresSemanticos);
+    }
+
+    public void syntax_error(Symbol actual) {
+        erroresSintacticos++;
+        String detalle = actual.value == null
+            ? "token " + actual.sym
+            : "'" + actual.value + "'";
+        System.err.println(
+            "Error sintáctico en línea " + actual.left
+                + ", columna " + actual.right + ": " + detalle);
+    }
+
+    public static class ErrorSintacticoNoRecuperable extends Exception {
+        public ErrorSintacticoNoRecuperable(String mensaje) {
+            super(mensaje);
+        }
+    }
+
+    public void unrecovered_syntax_error(Symbol actual) throws Exception {
+        if (erroresSintacticos == 0) {
+            syntax_error(actual);
+        }
+        throw new ErrorSintacticoNoRecuperable(
+            "No se pudo recuperar el análisis sintáctico en línea "
+                + actual.left + ", columna " + actual.right + ".");
+    }
+
+    public void iniciarFuncion(
+            String nombre,
+            int linea,
+            int columna,
+            String parametro,
+            int lineaParametro,
+            int columnaParametro) {
+        registrarFuncion(nombre, linea, columna);
+        gestorAmbitos.entrarAmbito();
+        declararVariable(parametro, lineaParametro, columnaParametro);
+    }
+
+    public void iniciarPrincipal(int linea, int columna) {
+        registrarFuncion("principal", linea, columna);
+        gestorAmbitos.entrarAmbito();
+    }
+
+    private void registrarFuncion(String nombre, int linea, int columna) {
+        if (gestorAmbitos.buscarEnAmbitoActual(nombre) != null) {
+            errorSemantico("R2", "Identificador ya declarado en este ámbito", linea, columna, nombre);
+            return;
+        }
+        gestorAmbitos.registrar(nombre, "entero", "funcion", null, nombre.length());
+    }
+
+    public void finalizarFuncion() {
+        gestorAmbitos.salirAmbito();
+    }
+
+    public void declararVariable(String nombre, int linea, int columna) {
+        if (gestorAmbitos.buscarEnAmbitoActual(nombre) != null) {
+            errorSemantico("R2", "Identificador ya declarado en este ámbito", linea, columna, nombre);
+            return;
+        }
+        gestorAmbitos.registrar(nombre, "entero", "variable", null, nombre.length());
+    }
+
+    private Simbolo buscarVariable(String nombre, int linea, int columna) {
+        Simbolo simbolo = gestorAmbitos.buscar(nombre);
+        if (simbolo == null || !"variable".equals(simbolo.getClase())) {
+            errorSemantico("E4", "Variable no declarada", linea, columna, nombre);
+            return null;
+        }
+        return simbolo;
+    }
+
+    public void emitirVariable(String nombre, int linea, int columna) {
+        Simbolo simbolo = buscarVariable(nombre, linea, columna);
+        if (simbolo != null) {
+            polaca.addReferencia(simbolo.getId());
+        }
+    }
+
+    public void emitirConstante(String valor) {
+        Simbolo simbolo = tablaSimbolos.registrarConstante(valor, "entero", valor.length());
+        polaca.addReferencia(simbolo.getId());
+    }
+
+    public void emitirLiteralTexto(String valor) {
+        Simbolo simbolo = tablaSimbolos.registrarConstante(valor, "texto", valor.length());
+        polaca.addReferencia(simbolo.getId());
+    }
+
+    public void emitirAsignacion(String nombre, int linea, int columna) {
+        Simbolo destino = buscarVariable(nombre, linea, columna);
+        if (destino != null) {
+            polaca.addReferencia(destino.getId());
+            polaca.addOperador(":=");
+        }
+    }
+
+    public void emitirOperador(String operador) {
+        polaca.addOperador(operador);
+    }
+
+    public Condicion emitirCondicion(String operador) {
+        polaca.addOperador(operador);
+        int saltoFalso = polaca.addSaltoPendiente("BF");
+        int saltoVerdadero = polaca.addSaltoPendiente("BI");
+        return new Condicion(
+            polaca.makelist(saltoVerdadero),
+            polaca.makelist(saltoFalso));
+    }
+
+    public void prepararY(Condicion izquierda, int inicioDerecha) {
+        polaca.backpatch(izquierda.getListaVerdadera(), inicioDerecha);
+    }
+
+    public void prepararO(Condicion izquierda, int inicioDerecha) {
+        polaca.backpatch(izquierda.getListaFalsa(), inicioDerecha);
+    }
+
+    public Condicion combinarY(Condicion izquierda, Condicion derecha) {
+        return new Condicion(
+            derecha.getListaVerdadera(),
+            polaca.merge(izquierda.getListaFalsa(), derecha.getListaFalsa()));
+    }
+
+    public Condicion combinarO(Condicion izquierda, Condicion derecha) {
+        return new Condicion(
+            polaca.merge(izquierda.getListaVerdadera(), derecha.getListaVerdadera()),
+            derecha.getListaFalsa());
+    }
+
+    public void emitirLlamada(
+            String nombre,
+            int linea,
+            int columna,
+            int cantidadArgumentos) {
+        Simbolo visible = gestorAmbitos.buscar(nombre);
+        int posicionReferencia = -1;
+        if (cantidadArgumentos == 1) {
+            posicionReferencia = polaca.addReferenciaPendiente(nombre);
+            polaca.addOperador("CALL");
+        }
+        llamadasPendientes.add(new LlamadaPendiente(
+            nombre,
+            linea,
+            columna,
+            cantidadArgumentos,
+            posicionReferencia,
+            visible != null && !"funcion".equals(visible.getClase())));
+    }
+
+    public void finalizarPrograma() {
+        for (LlamadaPendiente llamada : llamadasPendientes) {
+            Simbolo funcion = tablaSimbolos.buscar(llamada.nombre, 0);
+
+            if (llamada.visibleNoFuncion) {
+                errorSemantico(
+                    "E6", "El identificador no corresponde a una función",
+                    llamada.linea, llamada.columna, llamada.nombre);
+                continue;
+            }
+            if (funcion == null || !"funcion".equals(funcion.getClase())) {
+                errorSemantico(
+                    "E6", "Función no declarada",
+                    llamada.linea, llamada.columna, llamada.nombre);
+                continue;
+            }
+            if (llamada.cantidadArgumentos != 1) {
+                errorSemantico(
+                    "E6", "La función requiere exactamente un argumento entero",
+                    llamada.linea, llamada.columna, llamada.nombre);
+                continue;
+            }
+            polaca.resolverReferencia(llamada.posicionReferencia, funcion.getId());
+        }
+    }
+
+    public void emitirMostrar() {
+        polaca.addOperador("PRINT");
+    }
+
+    public void emitirMostrarTexto() {
+        polaca.addOperador("PRINT_TEXT");
+    }
+
+    public void emitirRetorno() {
+        polaca.addOperador("RET");
+    }
+
+    public void iniciarSeleccion(Condicion condicion, int linea, int columna) {
+        polaca.backpatch(condicion.getListaVerdadera(), polaca.getPos());
+        entrarEstructura(linea, columna);
+        controles.push(new MarcoControl("si", -1, condicion.getListaFalsa()));
+    }
+
+    public void finalizarSeleccion() {
+        MarcoControl marco = sacarControl("si");
+        polaca.backpatch(marco.listaFalsa, polaca.getPos());
+        gestorAmbitos.salirAmbito();
+        profundidadControl--;
+    }
+
+    public void iniciarBucle(int linea, int columna) {
+        entrarEstructura(linea, columna);
+        controles.push(new MarcoControl("bucle", polaca.getPos(), null));
+    }
+
+    public void finalizarBucle(Condicion condicion) {
+        MarcoControl marco = sacarControl("bucle");
+        polaca.backpatch(condicion.getListaVerdadera(), polaca.getPos());
+        polaca.backpatch(condicion.getListaFalsa(), marco.inicio);
+        gestorAmbitos.salirAmbito();
+        profundidadControl--;
+    }
+
+    private void entrarEstructura(int linea, int columna) {
+        profundidadControl++;
+        if (profundidadControl > 3) {
+            errorSemantico(
+                "E5",
+                "R3: se excedió el máximo de tres estructuras si/bucle anidadas",
+                linea,
+                columna,
+                null);
+        }
+        gestorAmbitos.entrarAmbito();
+    }
+
+    private MarcoControl sacarControl(String tipo) {
+        if (controles.isEmpty() || !tipo.equals(controles.peek().tipo)) {
+            throw new IllegalStateException("La pila de estructuras de control está desbalanceada.");
+        }
+        return controles.pop();
+    }
+
+    private void errorSemantico(
+            String codigo,
+            String descripcion,
+            int linea,
+            int columna,
+            String identificador) {
+        erroresSemanticos.add(
+            new ErrorSemantico(codigo, descripcion, linea, columna, identificador));
+    }
+
+    private static final class MarcoControl {
+        private final String tipo;
+        private final int inicio;
+        private final List<Integer> listaFalsa;
+
+        private MarcoControl(String tipo, int inicio, List<Integer> listaFalsa) {
+            this.tipo = tipo;
+            this.inicio = inicio;
+            this.listaFalsa = listaFalsa;
+        }
+    }
+
+    private static final class LlamadaPendiente {
+        private final String nombre;
+        private final int linea;
+        private final int columna;
+        private final int cantidadArgumentos;
+        private final int posicionReferencia;
+        private final boolean visibleNoFuncion;
+
+        private LlamadaPendiente(
+                String nombre,
+                int linea,
+                int columna,
+                int cantidadArgumentos,
+                int posicionReferencia,
+                boolean visibleNoFuncion) {
+            this.nombre = nombre;
+            this.linea = linea;
+            this.columna = columna;
+            this.cantidadArgumentos = cantidadArgumentos;
+            this.posicionReferencia = posicionReferencia;
+            this.visibleNoFuncion = visibleNoFuncion;
+        }
+    }
+:};
+
+terminal String ID, CTE, LITERAL_TXT;
+terminal ENTERO, PRINCIPAL, SI, BUCLE, HASTA, MOSTRAR, MOSTRAR_TXT, Y, O, RETORNAR;
+terminal ASIG, IGUAL, DISTINTO, MENOR, MENOR_O_IGUAL, MAYOR, MAYOR_O_IGUAL;
+terminal SUMA, RESTA, MULTIPLICACION, DIVISION;
+terminal PAREN_IZQ, PAREN_DER, LLAVE_IZQ, LLAVE_DER, COMA, FIN_DE_LINEA;
+
+non terminal programa, funciones_antes, funcion_principal, funciones_despues;
+non terminal funcion_normal, bloque_funcion, bloque_control, sentencias, sentencia;
+non terminal declaracion, lista_ids, asignacion, seleccion, iteracion, salida, retorno;
+non terminal Condicion condicion, cond_bloque;
+non terminal expresion, termino, factor, fin_lineas;
+non terminal String comparador;
+non terminal Integer llamada_argumentos;
+non terminal Integer inicio_condicion;
+
+start with programa;
+
+programa ::= funciones_antes funcion_principal funciones_despues
+             {: parser.finalizarPrograma(); :}
+           ;
+
+funciones_antes ::= /* empty */
+                  | funciones_antes funcion_normal fin_lineas
+                  ;
+
+funcion_principal ::= ENTERO PRINCIPAL:kw PAREN_IZQ PAREN_DER
+                       {: parser.iniciarPrincipal(kwleft, kwright); :}
+                       fin_lineas bloque_funcion
+                       {: parser.finalizarFuncion(); :}
+                       ;
+
+funciones_despues ::= /* empty */
+                    | fin_lineas funcion_normal funciones_despues
+                    | fin_lineas
+                    ;
+
+funcion_normal ::= ENTERO ID:nombre PAREN_IZQ ENTERO ID:parametro PAREN_DER
+                    {: parser.iniciarFuncion(
+                        nombre, nombreleft, nombreright,
+                        parametro, parametroleft, parametroright); :}
+                    fin_lineas bloque_funcion
+                    {: parser.finalizarFuncion(); :}
+                    ;
+
+bloque_funcion ::= LLAVE_IZQ fin_lineas sentencias LLAVE_DER;
+
+bloque_control ::= LLAVE_IZQ fin_lineas sentencias LLAVE_DER;
+
+sentencias ::= sentencia FIN_DE_LINEA
+             | sentencias sentencia FIN_DE_LINEA
+             | error FIN_DE_LINEA
+             | sentencias error FIN_DE_LINEA
+             ;
+
+sentencia ::= declaracion
+            | asignacion
+            | seleccion
+            | iteracion
+            | salida
+            | retorno
+            ;
+
+declaracion ::= ENTERO lista_ids;
+
+lista_ids ::= ID:nombre
+               {: parser.declararVariable(nombre, nombreleft, nombreright); :}
+            | lista_ids COMA ID:nombre
+               {: parser.declararVariable(nombre, nombreleft, nombreright); :}
+            ;
+
+asignacion ::= ID:nombre ASIG expresion
+               {: parser.emitirAsignacion(nombre, nombreleft, nombreright); :}
+             ;
+
+seleccion ::= SI:kw PAREN_IZQ condicion:resultado PAREN_DER
+              {: parser.iniciarSeleccion(resultado, kwleft, kwright); :}
+              fin_lineas bloque_control
+              {: parser.finalizarSeleccion(); :}
+            ;
+
+iteracion ::= BUCLE:kw
+              {: parser.iniciarBucle(kwleft, kwright); :}
+              fin_lineas bloque_control HASTA PAREN_IZQ condicion:resultado PAREN_DER
+              {: parser.finalizarBucle(resultado); :}
+            ;
+
+salida ::= MOSTRAR PAREN_IZQ expresion PAREN_DER
+           {: parser.emitirMostrar(); :}
+         | MOSTRAR_TXT PAREN_IZQ LITERAL_TXT:texto PAREN_DER
+           {: parser.emitirLiteralTexto(texto); parser.emitirMostrarTexto(); :}
+         ;
+
+retorno ::= RETORNAR expresion
+            {: parser.emitirRetorno(); :}
+          ;
+
+condicion ::= cond_bloque:izquierda
+              {: RESULT = izquierda; :}
+            | condicion:izquierda Y
+              inicio_condicion:inicio
+              cond_bloque:derecha
+              {: parser.prepararY(izquierda, inicio.intValue());
+                 RESULT = parser.combinarY(izquierda, derecha); :}
+            | condicion:izquierda O
+              inicio_condicion:inicio
+              cond_bloque:derecha
+              {: parser.prepararO(izquierda, inicio.intValue());
+                 RESULT = parser.combinarO(izquierda, derecha); :}
+            ;
+
+cond_bloque ::= expresion comparador:operador expresion
+                {: RESULT = parser.emitirCondicion(operador); :}
+              | PAREN_IZQ condicion:anidada PAREN_DER
+                {: RESULT = anidada; :}
+              ;
+
+comparador ::= IGUAL {: RESULT = "=="; :}
+             | DISTINTO {: RESULT = "<>"; :}
+             | MENOR {: RESULT = "<"; :}
+             | MENOR_O_IGUAL {: RESULT = "<="; :}
+             | MAYOR {: RESULT = ">"; :}
+             | MAYOR_O_IGUAL {: RESULT = ">="; :}
+             ;
+
+llamada_argumentos ::= /* empty */
+                      {: RESULT = Integer.valueOf(0); :}
+                    | expresion
+                      {: RESULT = Integer.valueOf(1); :}
+                    | llamada_argumentos:anteriores COMA expresion
+                      {: RESULT = Integer.valueOf(anteriores.intValue() + 1); :}
+                  ;
+
+inicio_condicion ::= /* empty */
+                    {: RESULT = Integer.valueOf(parser.getPolaca().getPos()); :}
+                  ;
+
+expresion ::= expresion SUMA termino {: parser.emitirOperador("+"); :}
+            | expresion RESTA termino {: parser.emitirOperador("-"); :}
+            | termino
+            ;
+
+termino ::= termino MULTIPLICACION factor {: parser.emitirOperador("*"); :}
+          | termino DIVISION factor {: parser.emitirOperador("/"); :}
+          | factor
+          ;
+
+factor ::= ID:nombre
+           {: parser.emitirVariable(nombre, nombreleft, nombreright); :}
+         | CTE:valor
+           {: parser.emitirConstante(valor); :}
+         | PAREN_IZQ expresion PAREN_DER
+         | ID:nombre PAREN_IZQ llamada_argumentos:cantidad PAREN_DER
+           {: parser.emitirLlamada(nombre, nombreleft, nombreright, cantidad.intValue()); :}
+         ;
+
+fin_lineas ::= FIN_DE_LINEA
+             | fin_lineas FIN_DE_LINEA
+             ;

@@ -60,18 +60,12 @@ public final class Funciones {
         ctx.tablaSimbolos.put(ctx.lexemaActual, "CTE");
     }
 
-    public static void f10(ContextoLexico ctx, int c) {
+public static void f10(ContextoLexico ctx, int c) {
     ctx.tokenActual = Matrices.TOKEN[ctx.filaActual][ctx.colActual];
     if (ctx.bufferLexema.length() == 0) {
         ctx.bufferLexema.append((char) c);
     }
-    // Si el buffer ya tiene este carácter, es porque lo estamos leyendo de nuevo
-    // (bucle). En ese caso, NO hacemos unread.
-    // Si el carácter es distinto al buffer, es un carácter que no pertenece al token
-    // (como la 'c' del (contador), y SÍ hacemos unread.
-    char actual = (char) c;
-    char enBuffer = ctx.bufferLexema.charAt(0);
-    ctx.debeHacerUnread = (actual != enBuffer);
+    ctx.debeHacerUnread = ctx.tokenActual != -1;
 }
 
     public static void f15(ContextoLexico ctx, int c) {
