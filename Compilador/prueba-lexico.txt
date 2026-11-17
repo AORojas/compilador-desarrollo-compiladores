@@ -1,0 +1,3 @@
+entero contador = 12
+contador < 20
+mostrar("prueba de lexemas")

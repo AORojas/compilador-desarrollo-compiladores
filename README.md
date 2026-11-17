@@ -1,32 +1,15 @@
 # Compilador GAUCHO
 
-Trabajo práctico universitario de desarrollo de compiladores (Grupo D). El proyecto implementa un compilador educativo para el lenguaje fuente GAUCHO, escrito en Java.
+Trabajo práctico universitario de desarrollo de compiladores (Grupo D), implementado en Java.
 
-## Alcance actual
+## Estado del proyecto
 
-- **Análisis léxico:** reconoce palabras reservadas, identificadores, constantes, operadores y delimitadores.
-- **Análisis sintáctico:** usa Java CUP para reconocer funciones, bloques, declaraciones, asignaciones, condiciones y estructuras de control.
-- **Análisis semántico:** mantiene tabla de símbolos y ámbitos; detecta identificadores no declarados, declaraciones duplicadas y más de tres niveles de `si`/`bucle`. Comprueba llamadas a funciones de un argumento.
-- **Código intermedio:** genera Polaca Inversa para expresiones aritméticas, asignaciones, comparaciones, llamadas y control de flujo. Las condiciones `y`/`o` usan saltos `BF`/`BI` para cortocircuito.
-
-La Polaca Inversa es la salida intermedia del proyecto; actualmente no se ejecuta. La generación de código Assembler y su ejecución quedan para una etapa posterior.
-
-## Limitación de precedencia lógica
-
-La precedencia entre `y` y `o` cuando aparecen mezclados sin paréntesis todavía no está definida. Para expresar claramente la intención, agrupa las condiciones con paréntesis, por ejemplo:
-
-```gaucho
-si ((a > 0 y b > 0) o c == 1)
-{
-    mostrar(a)
-}
-```
+El analizador léxico está finalizado y se conserva como base funcional del proyecto. La etapa sintáctica se encuentra en desarrollo a partir de las especificaciones de `specs/`. Por ahora, el punto de entrada solo muestra los tokens reconocidos por el lexer.
 
 ## Requisitos
 
 - JDK con `java` y `javac`.
-- Bash.
-- Java CUP `11b-20160615`, disponible en `Compilador/cup.jar`.
+- Bash o una terminal equivalente.
 
 ## Compilar y ejecutar
 
@@ -34,35 +17,17 @@ Desde Bash, cambia al directorio `Compilador/`:
 
 ```bash
 cd Compilador
-java -cp cup.jar java_cup.Main -package sintactico -parser Parser -symbols sym -destdir src/sintactico src/sintactico/parser.cup
 mkdir -p out
-javac -encoding UTF-8 -cp cup.jar -d out src/Main.java src/lexico/*.java src/sintactico/*.java
-java -cp 'out;cup.jar' Main
+javac -encoding UTF-8 -d out src/Main.java src/lexico/*.java
+java -cp out Main ruta/al/archivo.txt
 ```
 
-`Main` analiza `prueba-sintactico.txt` por defecto. Para analizar otro archivo:
+La ruta del archivo es obligatoria y puede ser relativa a `Compilador/` o absoluta. El programa imprime el código, lexema, línea y columna de cada token; informa los errores léxicos y termina con un código distinto de cero si los encuentra.
 
-```bash
-java -cp 'out;cup.jar' Main ruta/al/archivo.txt
-```
+## Estructura principal
 
-El JAR de CUP no declara `Main-Class`, por eso se invoca mediante `java -cp cup.jar java_cup.Main`. El separador `;` del classpath corresponde a Java en Windows, incluso al ejecutar desde Git Bash.
+- `Compilador/src/lexico/`: analizador léxico y sus componentes.
+- `Compilador/src/Main.java`: ejecuta temporalmente solo el análisis léxico.
+- `specs/`: especificaciones del lenguaje y etapas del compilador.
 
-## Pruebas de regresión
-
-Después de generar CUP y compilar las fuentes:
-
-```bash
-javac -encoding UTF-8 -cp 'out;cup.jar' -d out tests/FrontendRegressionTest.java
-java -cp 'out;cup.jar' FrontendRegressionTest
-```
-
-La suite comprueba el lexer, EOF, precedencia aritmética, ámbitos, validaciones semánticas, llamadas, recuperación y destinos de salto. La validación de cortocircuito es estructural: no hay todavía una máquina virtual que ejecute la Polaca.
-
-## Archivos principales
-
-- `Compilador/src/lexico/`: analizador léxico y sus matrices.
-- `Compilador/src/sintactico/parser.cup`: gramática CUP y acciones semánticas.
-- `Compilador/src/sintactico/`: adaptador CUP, tabla de símbolos, ámbitos, Polaca Inversa y clases auxiliares.
-- `Compilador/tests/FrontendRegressionTest.java`: pruebas de regresión del frontend.
-- `specs/`: especificaciones y documentación del trabajo.
+La implementación del analizador sintáctico, Java CUP, las pruebas del frontend y los archivos de compilación anteriores se retiraron para reiniciar esa etapa. La generación de Polaca Inversa y Assembler no forma parte del estado actual.

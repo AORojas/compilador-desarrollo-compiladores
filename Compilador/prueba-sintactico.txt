@@ -1,6 +1,0 @@
-entero principal()
-{
-    entero x
-    x = 2 + 3
-    mostrar(x)
-}
