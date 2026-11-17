@@ -91,7 +91,7 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 ```
 <programa>          ::= <lista_funciones>
 
-<lista_funciones>   ::= <lista_funciones> <funcion>
+<lista_funciones>   ::= <lista_funciones> <funcion> 
                       | <funcion>
 
 <funcion>           ::= ENTERO ID '(' ENTERO ID ')' <bloque>
@@ -109,12 +109,14 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
                       | <salida> <separador>
                       | <retorno> <separador>
 
-<separador>         ::= <fin_lineas>
+<separador>         ::= FIN_DE_LINEA <fin_lineas> 
+                      | FIN_DE_LINEA
 
-<fin_lineas>        ::= <fin_lineas> '\n'
-                      | '\n'
+<fin_lineas>        ::= FIN_DE_LINEA <fin_lineas> 
+                      | FIN_DE_LINEA
 
 <declaracion>       ::= ENTERO <lista_ids>
+
 <lista_ids>         ::= <lista_ids> ',' ID
                       | ID
 
@@ -136,7 +138,7 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 <cond_bloque>       ::= <expresion> <comparador> <expresion>
                       | '(' <condicion> ')'
 
-<comparador>        ::= IGUAL | DISTINTO | MENOR | MENOR O IGUAL | MAYOR | MAYOR O IGUAL
+<comparador>        ::= IGUAL | DISTINTO | MENOR | MENOR_O_IGUAL | MAYOR | MAYOR_O_IGUAL
 
 <expresion>         ::= <expresion> '+' <termino>
                       | <expresion> '-' <termino>
@@ -204,7 +206,7 @@ entero calcularFactorial(entero numero)
     {
         resultado = resultado * numero
         numero = numero - 1
-    } hasta (numero igual 0)
+    } hasta (numero == 0)
     
     retornar resultado
 }
