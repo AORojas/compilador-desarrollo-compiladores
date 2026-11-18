@@ -1,0 +1,195 @@
+import ast.Hoja;
+import ast.Nodo;
+import ast.NodoAST;
+import java_cup.runtime.Symbol;
+
+parser code {:
+    private int erroresSintacticos;
+
+    public int getErroresSintacticos() {
+        return erroresSintacticos;
+    }
+
+    @Override
+    public void syntax_error(Symbol simbolo) {
+        erroresSintacticos++;
+        String terminal = simbolo.sym >= 0 && simbolo.sym < sym.terminalNames.length
+            ? sym.terminalNames[simbolo.sym]
+            : Integer.toString(simbolo.sym);
+        System.err.println(
+            "Error sintáctico E3 en línea " + simbolo.left
+                + ", columna " + simbolo.right
+                + ": token inesperado " + terminal + ".");
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol simbolo) throws Exception {
+        throw new ErrorFatal();
+    }
+
+    public static class ErrorFatal extends Exception {
+        private static final long serialVersionUID = 1L;
+    }
+:};
+
+terminal String ID, CTE, LITERAL_TXT;
+terminal PRINCIPAL, ENTERO, SI, BUCLE, HASTA, MOSTRAR, MOSTRAR_TXT;
+terminal Y, O, RETORNAR, ASIG, IGUAL, DISTINTO, MENOR, MENOR_O_IGUAL;
+terminal MAYOR, MAYOR_O_IGUAL, SUMA, RESTA, MULTIPLICACION, DIVISION;
+terminal PAREN_IZQ, PAREN_DER, LLAVE_IZQ, LLAVE_DER, COMA, FIN_DE_LINEA;
+
+non terminal NodoAST programa, lista_funciones, funcion, bloque, sentencias;
+non terminal NodoAST sentencia, declaracion, lista_ids, asignacion;
+non terminal NodoAST seleccion, iteracion, salida, retorno, condicion, cond_bloque;
+non terminal NodoAST expresion, termino, factor;
+non terminal String comparador;
+non terminal fin_lineas, opcional_fin_linea;
+
+precedence left Y, O;
+precedence left IGUAL, DISTINTO, MENOR, MENOR_O_IGUAL, MAYOR, MAYOR_O_IGUAL;
+precedence left SUMA, RESTA;
+precedence left MULTIPLICACION, DIVISION;
+
+start with programa;
+
+programa ::= lista_funciones:funciones
+    {: RESULT = new Nodo("PROGRAMA", funciones, null); :}
+    ;
+
+lista_funciones ::= lista_funciones:lista funcion:funcion
+    {: RESULT = new Nodo("LISTA_FUNCIONES", lista, funcion); :}
+    | funcion:funcion
+    {: RESULT = funcion; :}
+    ;
+
+funcion ::= ENTERO ID:nombre PAREN_IZQ ENTERO ID:parametro PAREN_DER opcional_fin_linea bloque:cuerpo opcional_fin_linea
+    {:
+        Nodo datosFuncion = new Nodo(nombre, new Hoja(parametro), null);
+        RESULT = new Nodo("FUNCION", datosFuncion, cuerpo);
+    :}
+    | ENTERO PRINCIPAL PAREN_IZQ PAREN_DER opcional_fin_linea bloque:cuerpo opcional_fin_linea
+    {:
+        Nodo datosFuncion = new Nodo("principal", null, null);
+        RESULT = new Nodo("FUNCION", datosFuncion, cuerpo);
+    :}
+    ;
+
+bloque ::= LLAVE_IZQ fin_lineas sentencias:lista LLAVE_DER
+    {: RESULT = new Nodo("BLOQUE", lista, null); :}
+    ;
+
+sentencias ::= sentencias:lista sentencia:sentencia
+    {: RESULT = new Nodo("LISTA_SENTENCIAS", lista, sentencia); :}
+    | sentencia:sentencia
+    {: RESULT = sentencia; :}
+    ;
+
+sentencia ::= declaracion:declaracion fin_lineas
+    {: RESULT = declaracion; :}
+    | asignacion:asignacion fin_lineas
+    {: RESULT = asignacion; :}
+    | seleccion:seleccion fin_lineas
+    {: RESULT = seleccion; :}
+    | iteracion:iteracion fin_lineas
+    {: RESULT = iteracion; :}
+    | salida:salida fin_lineas
+    {: RESULT = salida; :}
+    | retorno:retorno fin_lineas
+    {: RESULT = retorno; :}
+    | error fin_lineas
+    {: RESULT = null; :}
+    ;
+
+declaracion ::= ENTERO lista_ids:ids
+    {: RESULT = new Nodo("DECLARACION", ids, null); :}
+    ;
+
+lista_ids ::= lista_ids:lista COMA ID:nombre
+    {: RESULT = new Nodo("LISTA_IDS", lista, new Hoja(nombre)); :}
+    | ID:nombre
+    {: RESULT = new Hoja(nombre); :}
+    ;
+
+asignacion ::= ID:nombre ASIG expresion:valor
+    {: RESULT = new Nodo("=", new Hoja(nombre), valor); :}
+    ;
+
+seleccion ::= SI PAREN_IZQ condicion:condicion PAREN_DER opcional_fin_linea bloque:cuerpo
+    {: RESULT = new Nodo("SI", condicion, cuerpo); :}
+    ;
+
+iteracion ::= BUCLE opcional_fin_linea bloque:cuerpo HASTA PAREN_IZQ condicion:condicion PAREN_DER
+    {: RESULT = new Nodo("BUCLE", cuerpo, condicion); :}
+    ;
+
+salida ::= MOSTRAR PAREN_IZQ expresion:valor PAREN_DER
+    {: RESULT = new Nodo("MOSTRAR", valor, null); :}
+    | MOSTRAR_TXT PAREN_IZQ LITERAL_TXT:texto PAREN_DER
+    {: RESULT = new Nodo("MOSTRAR_TEXTO", new Hoja(texto), null); :}
+    ;
+
+retorno ::= RETORNAR expresion:valor
+    {: RESULT = new Nodo("RETORNAR", valor, null); :}
+    ;
+
+condicion ::= condicion:izquierda Y cond_bloque:derecha
+    {: RESULT = new Nodo("Y", izquierda, derecha); :}
+    | condicion:izquierda O cond_bloque:derecha
+    {: RESULT = new Nodo("O", izquierda, derecha); :}
+    | cond_bloque:condicion
+    {: RESULT = condicion; :}
+    ;
+
+cond_bloque ::= expresion:izquierda comparador:operador expresion:derecha
+    {: RESULT = new Nodo(operador, izquierda, derecha); :}
+    | PAREN_IZQ condicion:condicion PAREN_DER
+    {: RESULT = condicion; :}
+    ;
+
+comparador ::= IGUAL
+    {: RESULT = "=="; :}
+    | DISTINTO
+    {: RESULT = "<>"; :}
+    | MENOR
+    {: RESULT = "<"; :}
+    | MENOR_O_IGUAL
+    {: RESULT = "<="; :}
+    | MAYOR
+    {: RESULT = ">"; :}
+    | MAYOR_O_IGUAL
+    {: RESULT = ">="; :}
+    ;
+
+expresion ::= expresion:izquierda SUMA termino:derecha
+    {: RESULT = new Nodo("+", izquierda, derecha); :}
+    | expresion:izquierda RESTA termino:derecha
+    {: RESULT = new Nodo("-", izquierda, derecha); :}
+    | termino:termino
+    {: RESULT = termino; :}
+    ;
+
+termino ::= termino:izquierda MULTIPLICACION factor:derecha
+    {: RESULT = new Nodo("*", izquierda, derecha); :}
+    | termino:izquierda DIVISION factor:derecha
+    {: RESULT = new Nodo("/", izquierda, derecha); :}
+    | factor:factor
+    {: RESULT = factor; :}
+    ;
+
+factor ::= PAREN_IZQ expresion:expresion PAREN_DER
+    {: RESULT = expresion; :}
+    | ID:nombre PAREN_IZQ expresion:argumento PAREN_DER
+    {: RESULT = new Nodo("LLAMADA", new Hoja(nombre), argumento); :}
+    | ID:nombre
+    {: RESULT = new Hoja(nombre); :}
+    | CTE:valor
+    {: RESULT = new Hoja(valor); :}
+    ;
+
+fin_lineas ::= FIN_DE_LINEA
+    | fin_lineas FIN_DE_LINEA
+    ;
+
+opcional_fin_linea ::= fin_lineas
+    |
+    ;

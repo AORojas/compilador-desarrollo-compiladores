@@ -6,6 +6,7 @@
 # Java: compilación y empaquetado
 *.class
 *.jar
+!Compilador/cup.jar
 *.war
 target/
 out/

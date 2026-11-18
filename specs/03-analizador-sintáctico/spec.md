@@ -133,7 +133,14 @@ funcion ::= ENTERO ID:nombre PAREN_IZQ ENTERO ID:param PAREN_DER bloque:b
        RESULT = new Nodo("FUNCION", datosFunc, b); 
     :};
 ```
+### 5.4. Manejo de fin de línea opcional
+Para permitir que las llaves de apertura de los bloques (`{`) se escriban en la línea siguiente (como se definió en la Spec de Diseño con `<opcional_fin_linea>`), las reglas de CUP incorporan el consumo opcional del token `FIN_DE_LINEA`.
 
+```java
+// Ejemplo de cómo se maneja en CUP
+seleccion ::= SI PAREN_IZQ condicion:c PAREN_DER opcional_fin_linea bloque:b 
+    {: RESULT = new Nodo("SI", c, b); :};
+```
 ---
 
 ## 6. Manejo de Errores Sintácticos

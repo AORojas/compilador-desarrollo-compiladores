@@ -94,8 +94,8 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 <lista_funciones>   ::= <lista_funciones> <funcion> 
                       | <funcion>
 
-<funcion>           ::= ENTERO ID '(' ENTERO ID ')' <bloque>
-                      | ENTERO PRINCIPAL '(' ')' <bloque>
+<funcion>           ::= ENTERO ID '(' ENTERO ID ')' <opcional_fin_linea> <bloque>
+                      | ENTERO PRINCIPAL '(' ')' <opcional_fin_linea> <bloque>
 
 <bloque>            ::= '{' <fin_lineas> <sentencias> '}' <fin_lineas>
 
@@ -115,16 +115,18 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 <fin_lineas>        ::= FIN_DE_LINEA <fin_lineas> 
                       | FIN_DE_LINEA
 
-<declaracion>       ::= ENTERO <lista_ids>
+<opcional_fin_linea> ::= <fin_lineas>
+                       | /* vacío (épsilon) */
 
+<declaracion>       ::= ENTERO <lista_ids>
 <lista_ids>         ::= <lista_ids> ',' ID
                       | ID
 
 <asignacion>        ::= ID ASIG <expresion>
 
-<seleccion>         ::= SI '(' <condicion> ')' <bloque>
+<seleccion>         ::= SI '(' <condicion> ')' <opcional_fin_linea> <bloque>
 
-<iteracion>         ::= BUCLE <bloque> HASTA '(' <condicion> ')'
+<iteracion>         ::= BUCLE <opcional_fin_linea> <bloque> HASTA '(' <condicion> ')'
 
 <salida>            ::= MOSTRAR '(' <expresion> ')'
                       | MOSTRAR_TXT '(' LITERAL_TXT ')'
@@ -165,9 +167,9 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 
 | Regla | Definición |
 |---|---|
-| R1 | Usar un ID no declarado previamente en el bloque o globales es un error semántico. |
-| R2 | Redefinir un ID en el mismo ámbito de alcance es un error semántico. |
-| R3 | Las estructuras de control (si, bucle) pueden anidarse hasta tres niveles. Superar este límite lanza error semántico con número de línea. El control se realiza mediante un contador en las acciones semánticas. |
+| R1 | Usar un ID no declarado previamente en el bloque o globales es un error semántico (Error E4). |
+| R2 | Redefinir un ID en el mismo ámbito de alcance es un error semántico (Error E8). |
+| R3 | Las estructuras de control (si, bucle) pueden anidarse hasta tres niveles. Superar este límite lanza error semántico (Error E5). *Nota de arquitectura: Dado que el AST no conserva ubicaciones físicas, el error se reportará indicando la estructura afectada (ej. "Anidamiento excedido"), prescindiendo del número de línea.* |
 | R4 | Evaluación en cortocircuito obligatoria para expresiones lógicas ligadas por y u o. |
 | R5 | La tabla de símbolos debe registrar obligatoriamente: nombre, tipo, valor (constantes) y longitud. Se exporta al finalizar la compilación. |
 | R6 | Las funciones gestionan sus variables en una pila de registros de activación (layout: dirección de retorno, enlace dinámico, parámetro, variables locales). |
@@ -183,11 +185,12 @@ La unidad de compilación es un conjunto de funciones. El punto de entrada oblig
 | E3 | Estructura sintáctica inválida (falta de salto de línea, paréntesis sin cerrar, etc.) | Sintáctico |
 | E4 | Variable no declarada en el alcance actual | Semántico |
 | E5 | Anidamiento de estructuras de control superior a 3 niveles | Semántico |
-| E6 | Error de firmas en funciones (cantidad errónea de parámetros) | Semántico |
+| E6 | Error de firmas en funciones (cantidad errónea de parámetros o llamada a función inexistente) | Semántico |
 | E7 | Overflow aritmético en operaciones matemáticas | Ejecución (Código Assembler generado) |
+| E8 | Redefinición de variable en el mismo ámbito | Semántico |
+| E9 | Función principal ausente o duplicada | Semántico |
 
-Nota: El compilador no debe abortar en el primer error léxico, sintáctico o semántico; debe recuperarse para reportar la mayor cantidad posible.
-
+**Nota:** El compilador no debe abortar en el primer error léxico, sintáctico o semántico; debe recuperarse para reportar la mayor cantidad posible.
 ---
 
 ## 9. Programa de ejemplo
@@ -361,7 +364,7 @@ En Java, la implementación concreta debe distinguir claramente dos flujos separ
 
 ## 15. Fuera de alcance
 
-* Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos.
+* Tipos de datos reales (punto flotante), caracteres, booleanos nativos o arreglos. Sobre el Generador de Código Intermedio: Al tener GAUCHO un único tipo de dato (entero), el Generador de Polaca no requiere emitir instrucciones de conversión de tipo (casting), simplificando la representación intermedia a solo referencias y operadores.
 * Funciones con más de un (1) parámetro o sin valor de retorno (procedimientos void).
 * Sentencias de entrada de datos por teclado (no hay funciones de lectura).
 * Operadores lógicos de negación binaria o unaria (not / !).
