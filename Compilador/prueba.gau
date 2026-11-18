@@ -1,0 +1,6 @@
+entero principal()
+{
+    entero x
+    x = 5 + 3
+    mostrar(x)
+}
