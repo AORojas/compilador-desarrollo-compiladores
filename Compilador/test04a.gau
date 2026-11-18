@@ -1,11 +1,13 @@
 entero principal()
 {
-    entero a
+    entero a, b
     a = 1
     mostrarTexto("bucle -- hasta(a > 0)")
     bucle
     {
         mostrar(a)
+        b = numeroExterno(a)
+        mostrar(b)
         si (a == 5)
         {
             mostrarTexto("Estamos en la mitad")

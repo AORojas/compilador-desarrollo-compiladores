@@ -179,6 +179,43 @@ Antes de procesar el token en la celda `i`, comprueba si algún salto (`[BF]` o 
     push rax         # Apila el valor retornado
     ```
 
+  ### Retorno desde una función auxiliar
+
+  El token `[RET]` indica que una función auxiliar debe:
+
+  1. Sacar el valor de retorno de la pila.
+  2. Restaurar el registro base y el espacio reservado.
+  3. Ejecutar `ret`, que devuelve el control a la instrucción siguiente al `call`
+     que originó la llamada.
+
+  No hace falta agregar un salto explícito hacia `principal` en la Polaca: la
+  dirección de retorno la administra el procesador mediante `call` y `ret`.
+  Después de `call mi_funcion`, el generador apila el valor devuelto en `rax`
+  mediante `push rax`.
+
+  #### Reportes sin sección de entradas
+
+  El reporte puede omitir la sección `Entradas de funciones:`. En ese caso, el
+  generador puede inferir la posición inicial de una función auxiliar a partir
+  de los saltos incondicionales resueltos:
+
+  * El generador identifica el mayor destino de un `[BI] ->N`.
+  * Ese destino se usa como punto de entrada auxiliar.
+  * `principal` comienza siempre en la posición `0`.
+  * Ante un `[RET]`, el generador emite `ret` y no continúa dentro de
+    `principal`.
+
+  Ejemplo parcial:
+
+  ```text
+  [BI] ->28
+  ...
+  [10] [12] [*] [11] [:=] [11] [RET]
+  ```
+
+  El generador interpreta `->28` como la entrada de la función auxiliar,
+  separa `_func_...` en esa posición y al encontrar `[RET]` genera `ret`.
+
 ---
 
 

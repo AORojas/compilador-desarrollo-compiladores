@@ -114,11 +114,8 @@ public final class GeneradorAsm {
 
         entradasFunciones.putAll(programa.getEntradasFunciones());
         if (entradasFunciones.isEmpty()) {
-            if (etiquetasFunciones.size() > 1) {
-                throw new IOException(
-                    "El reporte no indica la posición de las funciones auxiliares.");
-            }
             entradasFunciones.put(principalId, 0);
+            inferirEntradasAuxiliares(principalId);
         }
         for (Map.Entry<Integer, Integer> entrada : entradasFunciones.entrySet()) {
             if (!etiquetasFunciones.containsKey(entrada.getKey())) {
@@ -132,6 +129,42 @@ public final class GeneradorAsm {
             if (!entradasFunciones.containsKey(idFuncion)) {
                 throw new IOException("Falta el punto de entrada de la función: " + idFuncion);
             }
+        }
+    }
+
+    private void inferirEntradasAuxiliares(int principalId) throws IOException {
+        List<Integer> auxiliares = new ArrayList<Integer>();
+        for (Integer id : etiquetasFunciones.keySet()) {
+            if (id.intValue() != principalId) {
+                auxiliares.add(id);
+            }
+        }
+        if (auxiliares.isEmpty()) {
+            return;
+        }
+
+        List<String> polaca = programa.getPolaca();
+        int entradaAuxiliar = -1;
+        for (int i = 0; i < polaca.size(); i++) {
+            if ("[BI]".equals(polaca.get(i)) && i + 1 < polaca.size()) {
+                String destino = polaca.get(i + 1);
+                if (destino.startsWith("->")) {
+                    int indiceDestino = leerDestino(destino);
+                    if (indiceDestino < polaca.size()
+                            && (entradaAuxiliar < 0 || indiceDestino > entradaAuxiliar)) {
+                        entradaAuxiliar = indiceDestino;
+                    }
+                }
+            }
+        }
+
+        if (entradaAuxiliar < 0) {
+            throw new IOException(
+                "El reporte no indica la posición de las funciones auxiliares "
+                    + "y no contiene un [BI] que permita inferir su entrada.");
+        }
+        for (Integer id : auxiliares) {
+            entradasFunciones.put(id, entradaAuxiliar);
         }
     }
 
