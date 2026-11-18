@@ -1,0 +1,21 @@
+entero principal()
+{
+    entero a
+    a = 1
+    mostrarTexto("bucle -- hasta(a > 0)")
+    bucle
+    {
+        mostrar(a)
+        si (a == 5)
+        {
+            mostrarTexto("Estamos en la mitad")
+        }
+        a = a + 1
+    } hasta (a > 0)
+}
+entero numeroExterno(entero numero)
+{
+    entero resultado
+    resultado = numero * 2
+    retornar resultado
+}

@@ -1,0 +1,26 @@
+entero principal()
+{
+    entero a, b, c, d
+    a = 2
+    b = 10
+    c = a + b
+    d = a * b
+    mostrarTexto("c y d")
+    mostrar(c)
+    mostrar(d)
+    mostrarTexto("if sin else")
+    mostrarTexto("-----------")
+    mostrarTexto("si (c > d)   ---  si (d > c)")
+    si (c > d)
+    {
+        mostrarTexto("c es mayor")
+    }
+    si (d > c)
+    {
+        mostrarTexto("d es mayor")
+        si (c < d)
+        {
+            mostrarTexto("c es menor -- si anidado")
+        }
+    }
+}

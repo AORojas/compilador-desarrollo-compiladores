@@ -1,0 +1,15 @@
+entero principal()
+{
+    entero a, b, c, d
+    a = 2
+    b = 10
+    c = a + b
+    d = a * b
+    mostrarTexto("a y b:")
+    mostrar(a)
+    mostrar(b)
+    mostrarTexto("Sumando a y b:")
+    mostrar(c)
+    mostrarTexto("Multiplicando a y b:")
+    mostrar(d)   
+}

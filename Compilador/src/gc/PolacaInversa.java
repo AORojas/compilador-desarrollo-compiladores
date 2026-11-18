@@ -32,7 +32,7 @@ public final class PolacaInversa {
 
         @Override
         public String toString() {
-            return Integer.toString(destino);
+            return "->" + destino;
         }
     }
 
@@ -102,7 +102,11 @@ public final class PolacaInversa {
             if (salida.length() > 0) {
                 salida.append(' ');
             }
-            salida.append('[').append(instruccion).append(']');
+            if (instruccion instanceof DestinoSalto) {
+                salida.append(instruccion);
+            } else {
+                salida.append('[').append(instruccion).append(']');
+            }
         }
         return salida.toString();
     }

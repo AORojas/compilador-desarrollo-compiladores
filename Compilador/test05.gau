@@ -1,0 +1,14 @@
+entero principal() /* falta bucle en el inicio del hasta */
+{
+    entero a
+    a = 1
+    mostrarTexto("bucle -- hasta(a > 0)")
+    {
+        mostrar(a)
+        si (a == 5)
+        {
+            mostrarTexto("Estamos en la mitad")
+        }
+        a = a + 1
+    } hasta (a > 0)
+}

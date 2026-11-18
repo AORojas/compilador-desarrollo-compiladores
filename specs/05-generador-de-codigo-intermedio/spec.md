@@ -24,6 +24,21 @@ La clase `PolacaInversa` encapsula una lista (`ArrayList<Object>`) y maneja cuat
 3.  **`DestinoPendiente`:** Un "hueco" reservado para un salto no resuelto.
 4.  **`DestinoSalto` (int):** La posición final a la que salta una instrucción.
 
+### 3.0. Formato lineal de la Polaca
+
+Cada referencia y cada operador se representa entre corchetes. Los operandos se
+formatean como `[ID]` y los operadores como `[+]`, `[:=]`, `[BF]`, `[BI]`, etc.
+
+Cuando un salto queda resuelto, su destino no se representa entre corchetes:
+se imprime inmediatamente después del operador como `->N`. Por ejemplo:
+
+```text
+[1] [3] [>] [BF] ->16 [BI] ->9
+```
+
+En este ejemplo, `BF` salta a la posición `16` y `BI` salta a la posición `9`.
+La notación `[16]` no representa un destino de salto.
+
 ### 3.1. Métodos de Backpatching
 - `addSaltoPendiente(String operador)`: Agrega el operador de salto y un hueco, devolviendo el índice del hueco.
 - `patch(int posicionHueco, int destino)`: Rellena el hueco con el destino real.
@@ -160,7 +175,10 @@ private void emitirHoja(Hoja hoja) {
 
 ## 7. Formato de Salida
 
-El `Main` imprimirá la **Polaca Inversa** de forma lineal, mostrando los operandos entre corchetes y los operadores tal cual.
+El `Main` imprimirá la **Polaca Inversa** de forma lineal, mostrando los
+operandos entre corchetes y los operadores tal cual. Los destinos resueltos de
+los saltos `BF` y `BI` se muestran con el prefijo `->`, separado del operador
+por un espacio.
 
 **Ejemplo de salida para `x = 5 + 3`:**
 
@@ -170,6 +188,16 @@ Polaca Inversa:
 ```
 
 > **Nota:** Donde `2` y `3` son los IDs de las constantes, y `1` es el ID de la variable `x`.
+
+**Ejemplo de salida con saltos resueltos:**
+
+```text
+[1] [3] [>] [BF] ->16 [BI] ->9 [2] [PRINT]
+```
+
+Los elementos `BF` y `BI` siguen representándose como `[BF]` y `[BI]`. Sus
+destinos son `16` y `9`, respectivamente, y por eso se escriben `->16` y `->9`,
+sin corchetes.
 
 ---
 
