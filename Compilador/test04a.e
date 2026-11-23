@@ -13,5 +13,6 @@ ID | Nombre | Tipo | Clase | Valor | Longitud | Ámbito
 11 | numero | entero | variable |  | 6 | 1
 12 | resultado | entero | variable |  | 9 | 1
 13 | 2 | entero | constante | 2 | 1 | 1
+14 | Funcion: numero Externo | texto | constante | Funcion: numero Externo | 23 | 1
 Polaca Inversa:
-[5] [3] [:=] [6] [PRINT] [3] [PRINT] [3] [2] [CALL] [4] [:=] [4] [PRINT] [3] [7] [==] [BF] ->23 [BI] ->21 [8] [PRINT] [3] [5] [+] [3] [:=] [3] [10] [>] [BF] ->5 [BI] ->35 [11] [13] [*] [12] [:=] [12] [RET]
+[5] [3] [:=] [6] [PRINT] [3] [PRINT] [3] [2] [CALL] [4] [:=] [4] [PRINT] [3] [7] [==] [BF] ->23 [BI] ->21 [8] [PRINT] [3] [5] [+] [3] [:=] [3] [10] [>] [BF] ->5 [BI] ->35 [11] [13] [*] [12] [:=] [14] [PRINT] [12] [RET]

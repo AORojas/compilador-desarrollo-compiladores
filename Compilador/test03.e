@@ -9,4 +9,4 @@ ID | Nombre | Tipo | Clase | Valor | Longitud | Ámbito
 7 | 1 | entero | constante | 1 | 1 | 2
 8 | 10 | entero | constante | 10 | 2 | 2
 Polaca Inversa:
-[3] [2] [:=] [4] [PRINT] [2] [PRINT] [2] [5] [==] [BF] ->16 [BI] ->14 [6] [PRINT] [2] [3] [+][2] [:=] [2] [8] [>] [BF] ->5 [BI] ->28
+[3] [2] [:=] [4] [PRINT] [2] [PRINT] [2] [5] [==] [BF] ->16 [BI] ->14 [6] [PRINT] [2] [3] [+] [2] [:=] [2] [8] [>] [BF] ->5 [BI] ->28

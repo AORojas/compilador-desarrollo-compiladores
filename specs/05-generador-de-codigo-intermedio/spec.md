@@ -199,6 +199,36 @@ Los elementos `BF` y `BI` siguen representándose como `[BF]` y `[BI]`. Sus
 destinos son `16` y `9`, respectivamente, y por eso se escriben `->16` y `->9`,
 sin corchetes.
 
+### Ejecución integrada desde `Main`
+
+Cuando el análisis léxico, sintáctico y semántico termina sin errores, `Main`
+debe completar el flujo de compilación con el mismo nombre base del archivo
+fuente:
+
+1. Escribe un reporte UTF-8 `<base>.e` con las secciones `Tabla de símbolos:`
+   y `Polaca Inversa:`.
+2. Lee el reporte con `ObtencionTsPi` y genera `<base>.s` mediante
+   `GeneradorAsm`.
+3. Ejecuta GCC y espera su finalización:
+   `gcc -no-pie -Wl,--image-base=0x400000 <base>.s -o <base>.exe`.
+4. Informa la ruta de cada artefacto. Si GCC no está disponible o devuelve un
+   código distinto de cero, informa el error y no anuncia el `.exe` como
+   generado correctamente.
+
+Si hay errores léxicos, sintácticos o semánticos, no se generan `.e`, `.s` ni
+`.exe`. El programa genera el ejecutable, pero no lo ejecuta automáticamente.
+
+Desde CMD, en `Compilador/`, compilar y ejecutar el flujo completo:
+
+```cmd
+if not exist out mkdir out
+javac -encoding UTF-8 -cp cup.jar -d out src\Main.java src\lexico\*.java src\ast\*.java src\sintactico\*.java src\semantico\*.java src\gc\*.java src\generadorasm\*.java
+java -cp "out;cup.jar" Main test04a.gau
+```
+
+Para este ejemplo, los archivos generados son `test04a.e`, `test04a.s` y
+`test04a.exe`. GCC debe estar instalado y disponible en `PATH`.
+
 ---
 
 ### 8. Consideraciones y Límites de la Implementación

@@ -37,9 +37,7 @@ Polaca Inversa:
 ```
 ### 2. Generacion de codigo y salida
 
-Generar GeneradorAsm.java aqui se debe llevar a cabo todo el procedimiento descripto mas adelante para generar el codigo assembler y guardarlo en `salida.s`.
-Este programa debera tener su propia rutina main. Debe ser una herramienta a parte del proyecto general, no se debe modificar ningun archivo actual del proyecto.
-Genera los .java necesarios para el funcionamiento respetando la estructura de directorios.
+`GeneradorAsm` puede ejecutarse como herramienta independiente: su rutina `main` lee un reporte `.e` y escribe el archivo assembler indicado. El `Main` general también utiliza las clases `ObtencionTsPi` y `GeneradorAsm` para automatizar las etapas `.e` → `.s` → `.exe` después de un análisis exitoso.
 
 Desde `Compilador/`, se puede compilar y ejecutar el generador así:
 

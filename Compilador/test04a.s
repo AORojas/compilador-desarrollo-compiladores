@@ -12,6 +12,7 @@
     _numero: .quad 0
     _resultado: .quad 0
     _cte13: .quad 2
+    _str14: .asciz "Funcion: numero Externo"
     _buf_str: .space 256
     fmt_int: .asciz "%lld\n"
     fmt_str: .asciz "%s\n"
@@ -104,6 +105,11 @@ _func_numeroExterno:
     pop rbx
     pop rax
     mov [_resultado], rax
+    lea rax, [_str14]
+    push rax
+    pop rdx
+    lea rcx, [fmt_str]
+    call printf
     push qword ptr [_resultado]
     pop rax
     add rsp, 32

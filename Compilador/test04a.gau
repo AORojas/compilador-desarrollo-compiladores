@@ -19,5 +19,6 @@ entero numeroExterno(entero numero)
 {
     entero resultado
     resultado = numero * 2
+    mostrarTexto("Funcion: numero Externo")
     retornar resultado
 }
