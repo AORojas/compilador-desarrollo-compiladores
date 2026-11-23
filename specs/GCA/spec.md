@@ -41,6 +41,17 @@ Generar GeneradorAsm.java aqui se debe llevar a cabo todo el procedimiento descr
 Este programa debera tener su propia rutina main. Debe ser una herramienta a parte del proyecto general, no se debe modificar ningun archivo actual del proyecto.
 Genera los .java necesarios para el funcionamiento respetando la estructura de directorios.
 
+Desde `Compilador/`, se puede compilar y ejecutar el generador así:
+
+```cmd
+if not exist out mkdir out
+javac -encoding UTF-8 -d out src/generadorasm/ObtencionTsPi.java src/generadorasm/GeneradorAsm.java
+java -cp out generadorasm.GeneradorAsm entrada04a.e salida04a.s
+gcc -no-pie -Wl,--image-base=0x400000 salida04a.s -o programa04a.exe
+programa04a.exe
+```
+
+El primer argumento de `GeneradorAsm` es el reporte con la tabla de símbolos y la Polaca Inversa; el segundo es el archivo assembler de salida. Si se omite alguno, se usan `entrada.e` y `salida.s`.
 
 ### 3. Estructura de directorios requerida:
 
@@ -165,7 +176,9 @@ Antes de procesar el token en la celda `i`, comprueba si algún salto (`[BF]` o 
         push rbp
         mov rbp, rsp
         sub rsp, 32
+        mov [_parametro], rcx
     ```
+    Las funciones auxiliares reciben exactamente un entero por valor, en `rcx` según la convención x64 de Windows. El generador guarda ese valor en la variable que representa el parámetro.
   * **Retorno (`[RET]`):**
     ```asm
     pop rax          # Si la función devuelve un valor o dirección
@@ -175,9 +188,11 @@ Antes de procesar el token en la celda `i`, comprueba si algún salto (`[BF]` o 
     ```
   * **Llamada (`[CALL]`):**
     ```asm
+    pop rcx          # Único argumento entero, previamente apilado al evaluar la expresión
     call mi_funcion
     push rax         # Apila el valor retornado
     ```
+    La forma correspondiente en Polaca es `[argumento] [ID_funcion] [CALL]`. `[CALL]` consume el argumento de la pila de evaluación y deja en ella el valor entero retornado; por ejemplo, `[3] [2] [CALL] [4] [:=]` pasa el símbolo 3, llama a la función 2 y asigna su retorno al símbolo 4.
 
   ### Retorno desde una función auxiliar
 
@@ -195,15 +210,13 @@ Antes de procesar el token en la celda `i`, comprueba si algún salto (`[BF]` o 
 
   #### Reportes sin sección de entradas
 
-  El reporte puede omitir la sección `Entradas de funciones:`. En ese caso, el
-  generador puede inferir la posición inicial de una función auxiliar a partir
-  de los saltos incondicionales resueltos:
+  El reporte puede omitir la sección `Entradas de funciones:` cuando hay una
+  sola función auxiliar. En ese caso, el generador infiere la posición inicial
+  auxiliar a partir de los saltos incondicionales resueltos:
 
   * El generador identifica el mayor destino de un `[BI] ->N`.
-  * Ese destino se usa como punto de entrada auxiliar.
+  * Ese destino se usa como punto de entrada de la única función auxiliar.
   * `principal` comienza siempre en la posición `0`.
-  * Ante un `[RET]`, el generador emite `ret` y no continúa dentro de
-    `principal`.
 
   Ejemplo parcial:
 
@@ -213,8 +226,32 @@ Antes de procesar el token en la celda `i`, comprueba si algún salto (`[BF]` o 
   [10] [12] [*] [11] [:=] [11] [RET]
   ```
 
-  El generador interpreta `->28` como la entrada de la función auxiliar,
-  separa `_func_...` en esa posición y al encontrar `[RET]` genera `ret`.
+  El generador interpreta `->28` como la entrada de la función auxiliar y
+  separa `_func_...` en esa posición. Al procesar `[RET]`, emite `ret`; así,
+  la ejecución vuelve a la instrucción posterior al `call`.
+
+  La tabla de símbolos y la Polaca no identifican explícitamente cuál variable
+  es el parámetro. Si falta esa información, el generador busca la variable de
+  menor ID referenciada en el cuerpo auxiliar. Si su primera referencia es una
+  lectura (no el destino de `:=`), la infiere como parámetro. Esto coincide con
+  el orden de declaración del compilador actual (el parámetro se declara antes
+  que las variables locales). Si su primera referencia es una asignación, no
+  hace falta copiar `rcx` a esa variable; el argumento igualmente se consume
+  al llamar. Si hay varias funciones auxiliares, el reporte debe incluir sus
+  posiciones, porque no se pueden inferir inequívocamente sus límites solo con
+  la Polaca.
+
+  Para proporcionar explícitamente posiciones y parámetros, se puede agregar:
+
+  ```text
+  Entradas de funciones:
+  ID | Índice de función | ID del parámetro
+  1 | 0 |
+  2 | 35 | 11
+  ```
+
+  El ID del parámetro es opcional: si se omite, el generador usa la misma
+  inferencia por la Polaca.
 
 ---
 
