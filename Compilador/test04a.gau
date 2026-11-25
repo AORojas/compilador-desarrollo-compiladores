@@ -13,11 +13,12 @@ entero principal()
             mostrarTexto("Estamos en la mitad")
         }
         a = a + 1
-    } hasta (a > 0)
+    } hasta (a > 10)
 }
 entero numeroExterno(entero numero)
 {
     entero resultado
     resultado = numero * 2
+    mostrarTexto("Funcion: numero Externo")
     retornar resultado
 }

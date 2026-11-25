@@ -1,24 +1,23 @@
 # Compilador GAUCHO
 
-Analizador sintáctico, semántico y generador de código intermedio en Java CUP. El parser construye el AST; el analizador semántico valida declaraciones, ámbitos, llamadas a funciones y anidamiento; el generador emite Polaca Inversa. El proyecto todavía no genera Assembler. Admite el salto de línea opcional antes de la llave de apertura de funciones, bloques `si` y bloques `bucle`.
+Compilador GAUCHO en Java CUP. El parser construye el AST; el analizador semántico valida declaraciones, ámbitos, llamadas a funciones y anidamiento; los generadores producen Polaca Inversa y Assembler, y GCC crea el ejecutable.
 
 ## Requisitos
 
 - JDK instalado, con `javac` y `java` disponibles en la terminal.
-- Bash.
+- GCC para Windows (MinGW-w64), disponible en `PATH`.
 
-## Generar, compilar y ejecutar desde Bash
+## Generar, compilar y ejecutar desde CMD
 
 Ejecuta estos comandos desde `Compilador/`:
 
-```bash
-java -cp cup.jar java_cup.Main -parser Parser -symbols sym -package sintactico -destdir src/sintactico src/sintactico/parser.cup
-mkdir -p out
-javac -encoding UTF-8 -cp cup.jar -d out src/Main.java src/lexico/*.java src/ast/*.java src/sintactico/*.java src/semantico/*.java src/gc/*.java
-java -cp "out;cup.jar" Main ruta/al/archivo.gau
+```cmd
+if not exist out mkdir out
+javac -encoding UTF-8 -cp cup.jar -d out src\Main.java src\lexico\*.java src\ast\*.java src\sintactico\*.java src\semantico\*.java src\gc\*.java src\generadorasm\*.java
+java -cp "out;cup.jar" Main test04a.gau
 ```
 
-La ruta es obligatoria y puede ser relativa a `Compilador/` o absoluta. El programa informa errores léxicos, sintácticos y semánticos, imprime el AST cuando está disponible, muestra la Tabla de Símbolos y genera la Polaca Inversa si no hay errores en las fases anteriores.
+La ruta del fuente es obligatoria y puede ser relativa a `Compilador/` o absoluta. Si el análisis léxico, sintáctico y semántico termina sin errores, `Main` muestra el AST, la tabla de símbolos y la Polaca Inversa, y genera junto al fuente los archivos `.e`, `.s` y `.exe` con el mismo nombre base. Por ejemplo, `test04a.gau` produce `test04a.e`, `test04a.s` y `test04a.exe`. Los archivos existentes con esos nombres se sobrescriben. GCC debe estar disponible en `PATH`; si falla, `Main` informa el error y no indica que el ejecutable se generó correctamente.
 
 ## Componentes principales
 
