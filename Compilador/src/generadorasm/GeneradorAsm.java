@@ -19,6 +19,7 @@ public final class GeneradorAsm {
     private final Map<Integer, String> etiquetas = new HashMap<Integer, String>();
     private final Map<Integer, String> etiquetasFunciones = new HashMap<Integer, String>();
     private final Map<Integer, Integer> entradasFunciones = new LinkedHashMap<Integer, Integer>();
+    private final Map<Integer, Integer> parametrosFunciones = new LinkedHashMap<Integer, Integer>();
     private final Set<Integer> destinos = new HashSet<Integer>();
     private final List<String> lineas = new ArrayList<String>();
     private final List<String> tiposPila = new ArrayList<String>();
@@ -130,6 +131,7 @@ public final class GeneradorAsm {
                 throw new IOException("Falta el punto de entrada de la función: " + idFuncion);
             }
         }
+        prepararParametrosFunciones();
     }
 
     private void inferirEntradasAuxiliares(int principalId) throws IOException {
@@ -141,6 +143,11 @@ public final class GeneradorAsm {
         }
         if (auxiliares.isEmpty()) {
             return;
+        }
+        if (auxiliares.size() > 1) {
+            throw new IOException(
+                "El reporte omite las entradas de varias funciones auxiliares; "
+                    + "no se pueden inferir sus posiciones sin ambigüedad.");
         }
 
         List<String> polaca = programa.getPolaca();
@@ -163,9 +170,71 @@ public final class GeneradorAsm {
                 "El reporte no indica la posición de las funciones auxiliares "
                     + "y no contiene un [BI] que permita inferir su entrada.");
         }
-        for (Integer id : auxiliares) {
-            entradasFunciones.put(id, entradaAuxiliar);
+        entradasFunciones.put(auxiliares.get(0), entradaAuxiliar);
+    }
+
+    private void prepararParametrosFunciones() throws IOException {
+        parametrosFunciones.putAll(programa.getParametrosFunciones());
+        List<String> polaca = programa.getPolaca();
+        for (Map.Entry<Integer, String> funcion : etiquetasFunciones.entrySet()) {
+            int idFuncion = funcion.getKey();
+            if ("main".equals(funcion.getValue())) {
+                continue;
+            }
+
+            Integer parametro = parametrosFunciones.get(idFuncion);
+            if (parametro == null) {
+                int inferido = inferirParametro(idFuncion, polaca);
+                if (inferido >= 0) {
+                    parametro = Integer.valueOf(inferido);
+                    parametrosFunciones.put(idFuncion, parametro);
+                }
+            }
+            if (parametro != null) {
+                ObtencionTsPi.Simbolo simboloParametro = simbolos.get(parametro);
+                if (simboloParametro == null
+                        || !"variable".equals(simboloParametro.getClase())
+                        || !"entero".equals(normalizarTipo(simboloParametro.getTipo()))) {
+                    throw new IOException(
+                        "El parámetro de la función " + idFuncion
+                            + " debe ser una variable entera existente.");
+                }
+            }
         }
+    }
+
+    private int inferirParametro(int idFuncion, List<String> polaca) throws IOException {
+        Integer entrada = entradasFunciones.get(idFuncion);
+        if (entrada == null) {
+            throw new IOException("No se puede inferir el parámetro sin entrada de función.");
+        }
+        int inicio = entrada.intValue();
+        int fin = polaca.size();
+        for (Integer otraEntrada : entradasFunciones.values()) {
+            if (otraEntrada.intValue() > inicio && otraEntrada.intValue() < fin) {
+                fin = otraEntrada.intValue();
+            }
+        }
+
+        int primerIdVariable = Integer.MAX_VALUE;
+        boolean parametroLeidoAntesDeAsignar = false;
+        Set<Integer> vistos = new HashSet<Integer>();
+        for (int i = inicio; i < fin; i++) {
+            String token = polaca.get(i);
+            if (!token.startsWith("[") || !esId(token.substring(1, token.length() - 1))) {
+                continue;
+            }
+            int id = Integer.parseInt(token.substring(1, token.length() - 1));
+            ObtencionTsPi.Simbolo simbolo = simbolos.get(id);
+            if (simbolo == null || !"variable".equals(simbolo.getClase())
+                    || !vistos.add(id) || id >= primerIdVariable) {
+                continue;
+            }
+            boolean destinoAsignacion = i + 1 < fin && "[:=]".equals(polaca.get(i + 1));
+            primerIdVariable = id;
+            parametroLeidoAntesDeAsignar = !destinoAsignacion;
+        }
+        return parametroLeidoAntesDeAsignar ? primerIdVariable : -1;
     }
 
     private void prepararDestinos() throws IOException {
@@ -436,11 +505,11 @@ public final class GeneradorAsm {
                 "CALL sin índice de entrada para '" + funcion.getNombre()
                     + "'; el reporte no incluye esa información.");
         }
-        Integer parametro = programa.getParametrosFunciones().get(id);
-        if (parametro != null) {
-            exigirEnteros(desapilarTipo("CALL"), "entero", "CALL");
-            lineas.add("    pop rcx");
+        if ("main".equals(etiqueta)) {
+            throw new IOException("No se puede llamar a la función 'principal'.");
         }
+        exigirEnteros(desapilarTipo("CALL"), "entero", "CALL");
+        lineas.add("    pop rcx");
         lineas.add("    call " + etiqueta);
         lineas.add("    push rax");
         tiposPila.add("entero");
@@ -480,7 +549,7 @@ public final class GeneradorAsm {
                 lineas.add("    push rbp");
                 lineas.add("    mov rbp, rsp");
                 lineas.add("    sub rsp, 32");
-                Integer parametro = programa.getParametrosFunciones().get(id);
+                Integer parametro = parametrosFunciones.get(id);
                 if (parametro != null) {
                     String etiquetaParametro = etiquetas.get(parametro);
                     if (etiquetaParametro == null) {
