@@ -75,8 +75,8 @@ public final class AnalizadorSemantico {
         String operador = rama.operador;
         if ("FUNCION".equals(operador)) {
             analizarFuncion(rama);
-        } else if ("DECLARACION".equals(operador)) {
-            analizarDeclaracion(rama.izquierdo);
+        } else if ("DECL".equals(operador) || "DECLARACION".equals(operador)) {
+            analizarDeclaracion(rama.derecho != null ? rama.derecho : rama.izquierdo);
         } else if ("=".equals(operador) || ":=".equals(operador)) {
             analizarDestinoAsignacion(rama.izquierdo);
             analizarNodo(rama.derecho);
@@ -96,7 +96,7 @@ public final class AnalizadorSemantico {
             }
         } else if ("LLAMADA".equals(operador)) {
             analizarLlamada(rama);
-        } else if ("MOSTRAR_TEXTO".equals(operador)) {
+        } else if ("MOSTRAR_TXT".equals(operador) || "MOSTRAR_TEXTO".equals(operador)) {
             registrarLiteralTexto(rama.izquierdo);
         } else {
             analizarNodo(rama.izquierdo);
@@ -205,7 +205,8 @@ public final class AnalizadorSemantico {
         if (!(funcion.izquierdo instanceof Nodo)) {
             return null;
         }
-        return ((Nodo) funcion.izquierdo).operador;
+        String nombre = ((Nodo) funcion.izquierdo).operador;
+        return "PRINCIPAL".equals(nombre) ? "principal" : nombre;
     }
 
 }

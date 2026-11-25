@@ -85,7 +85,7 @@ public final class GeneradorCodigoIntermedio {
             } else if ("MOSTRAR".equals(operador)) {
                 procesarNodo(rama.izquierdo);
                 polaca.addOperador("PRINT");
-            } else if ("MOSTRAR_TEXTO".equals(operador)) {
+            } else if ("MOSTRAR_TXT".equals(operador) || "MOSTRAR_TEXTO".equals(operador)) {
                 emitirLiteralTexto(rama.izquierdo);
                 polaca.addOperador("PRINT");
             } else if ("RETORNAR".equals(operador)) {
@@ -97,8 +97,8 @@ public final class GeneradorCodigoIntermedio {
                 polaca.addOperador("CALL");
             } else if ("FUNCION".equals(operador)) {
                 procesarFuncion(rama);
-            } else if ("DECLARACION".equals(operador)) {
-                registrarDeclaraciones(rama.izquierdo);
+            } else if ("DECL".equals(operador) || "DECLARACION".equals(operador)) {
+                registrarDeclaraciones(rama.derecho != null ? rama.derecho : rama.izquierdo);
             } else if ("Y".equals(operador) || "O".equals(operador)) {
                 throw new IllegalStateException(
                     "Una condición lógica debe generarse dentro de SI o BUCLE.");

@@ -57,7 +57,7 @@ programa ::= lista_funciones:funciones
     ;
 
 lista_funciones ::= lista_funciones:lista funcion:funcion
-    {: RESULT = new Nodo("LISTA_FUNCIONES", lista, funcion); :}
+    {: RESULT = new Nodo("FUNCIONES", lista, funcion); :}
     | funcion:funcion
     {: RESULT = funcion; :}
     ;
@@ -69,7 +69,7 @@ funcion ::= ENTERO ID:nombre PAREN_IZQ ENTERO ID:parametro PAREN_DER opcional_fi
     :}
     | ENTERO PRINCIPAL PAREN_IZQ PAREN_DER opcional_fin_linea bloque:cuerpo opcional_fin_linea
     {:
-        Nodo datosFuncion = new Nodo("principal", null, null);
+        Nodo datosFuncion = new Nodo("PRINCIPAL", null, null);
         RESULT = new Nodo("FUNCION", datosFuncion, cuerpo);
     :}
     ;
@@ -79,7 +79,7 @@ bloque ::= LLAVE_IZQ fin_lineas sentencias:lista LLAVE_DER
     ;
 
 sentencias ::= sentencias:lista sentencia:sentencia
-    {: RESULT = new Nodo("LISTA_SENTENCIAS", lista, sentencia); :}
+    {: RESULT = new Nodo("SENTENCIAS", lista, sentencia); :}
     | sentencia:sentencia
     {: RESULT = sentencia; :}
     ;
@@ -101,17 +101,17 @@ sentencia ::= declaracion:declaracion fin_lineas
     ;
 
 declaracion ::= ENTERO lista_ids:ids
-    {: RESULT = new Nodo("DECLARACION", ids, null); :}
+    {: RESULT = new Nodo("DECL", new Hoja("ENTERO"), ids); :}
     ;
 
 lista_ids ::= lista_ids:lista COMA ID:nombre
-    {: RESULT = new Nodo("LISTA_IDS", lista, new Hoja(nombre)); :}
+    {: RESULT = new Nodo(",", lista, new Hoja(nombre)); :}
     | ID:nombre
     {: RESULT = new Hoja(nombre); :}
     ;
 
 asignacion ::= ID:nombre ASIG expresion:valor
-    {: RESULT = new Nodo("=", new Hoja(nombre), valor); :}
+    {: RESULT = new Nodo(":=", new Hoja(nombre), valor); :}
     ;
 
 seleccion ::= SI PAREN_IZQ condicion:condicion PAREN_DER opcional_fin_linea bloque:cuerpo
@@ -125,7 +125,7 @@ iteracion ::= BUCLE opcional_fin_linea bloque:cuerpo HASTA PAREN_IZQ condicion:c
 salida ::= MOSTRAR PAREN_IZQ expresion:valor PAREN_DER
     {: RESULT = new Nodo("MOSTRAR", valor, null); :}
     | MOSTRAR_TXT PAREN_IZQ LITERAL_TXT:texto PAREN_DER
-    {: RESULT = new Nodo("MOSTRAR_TEXTO", new Hoja(texto), null); :}
+    {: RESULT = new Nodo("MOSTRAR_TXT", new Hoja(texto), null); :}
     ;
 
 retorno ::= RETORNAR expresion:valor
